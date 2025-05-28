@@ -639,5 +639,40 @@ z_proporcion_cierre_por_solicitud_matrona_mensual_establecimiento <- proporcion_
   filter(date > mesesatras_12) %>% 
   filter(tipo_prestador == 'Matrona')
 
+z_proporcion_cierre_por_solicitud_asistente_social_mensual_establecimiento <- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento %>%
+  mutate(cie_sol = ifelse(is.na(cie_sol), 0, cie_sol)) %>%
+  filter(date > mesesatras_12) %>% 
+  filter(tipo_prestador == 'Asistente Social')
+
+z_proporcion_cierre_por_solicitud_enfermeria_mensual_establecimiento <- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento %>%
+  mutate(cie_sol = ifelse(is.na(cie_sol), 0, cie_sol)) %>%
+  filter(date > mesesatras_12) %>% 
+  filter(tipo_prestador == 'Enfermería')
+
+z_proporcion_cierre_por_solicitud_kinesiologia_mensual_establecimiento <- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento %>%
+  mutate(cie_sol = ifelse(is.na(cie_sol), 0, cie_sol)) %>%
+  filter(date > mesesatras_12) %>% 
+  filter(tipo_prestador == 'Kinesiología')
+
+z_proporcion_cierre_por_solicitud_nutricion_mensual_establecimiento <- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento %>%
+  mutate(cie_sol = ifelse(is.na(cie_sol), 0, cie_sol)) %>%
+  filter(date > mesesatras_12) %>% 
+  filter(tipo_prestador == 'Nutrición')
+
+z_proporcion_cierre_por_solicitud_psicologia_mensual_establecimiento <- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento %>%
+  mutate(cie_sol = ifelse(is.na(cie_sol), 0, cie_sol)) %>%
+  filter(date > mesesatras_12) %>% 
+  filter(tipo_prestador == 'Psicología')
+
+z_proporcion_cierre_por_solicitud_tens_mensual_establecimiento <- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento %>%
+  mutate(cie_sol = ifelse(is.na(cie_sol), 0, cie_sol)) %>%
+  filter(date > mesesatras_12) %>% 
+  filter(tipo_prestador == 'Técnico en enfermería')
+
+z_proporcion_cierre_por_solicitud_terapia_ocupacional_mensual_establecimiento <- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento %>%
+  mutate(cie_sol = ifelse(is.na(cie_sol), 0, cie_sol)) %>%
+  filter(date > mesesatras_12) %>% 
+  filter(tipo_prestador == 'Terapia Ocupacional')
+
 
 proporcion_pendientes_centro_ano <- proporcion_pendientes_centro_ano %>% arrange(desc(`Proporción de solicitudes pendientes`))
