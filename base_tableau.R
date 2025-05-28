@@ -16,7 +16,7 @@ pacman::p_load(
 
 ####################### Importo los datos ########################################
 
-data <- import('data/base_enero_2025.csv') %>% clean_names() 
+data <- import('data/base_abril_2025.csv') %>% clean_names() 
 piv <- import('data/piv2024.xlsx') %>% clean_names()
 deis <- import('data/deis_ssms.xlsx') %>% clean_names() %>% rename(centro = nombre_oficial,comuna = nombre_comuna, codigo_centro = codigo_vigente)
 
@@ -29,17 +29,20 @@ data2 <- data %>%
   mutate(
     cesfam = ifelse(cesfam == 'CESFAM Eduardo Frei Montalva',
                     'Centro de Salud Familiar Eduardo Frei Montalva', cesfam),
-    cesfam = ifelse(cesfam == 'Centro Comunitario de Salud Familiar Dr. Salvador Allende',
-                    'Centro Comunitario de Salud Familiar Juan Aravena', cesfam),
+    cesfam = ifelse(cesfam == 'Centro Comunitario de Salud Familiar Juan Aravena',
+                    'Centro Comunitario de Salud Familiar Dr. Salvador Allende', cesfam),
+    cesfam = ifelse(cesfam == 'CECOSF Juan Aravena',
+                    'Centro Comunitario de Salud Familiar Dr. Salvador Allende', cesfam),
     cesfam = ifelse(cesfam == 'Centro de Salud Familiar Juan Pablo II',
                     'Centro de Salud Familiar Juan Pablo II ( San Bernardo)', cesfam),
-    cesfam = ifelse(cesfam == 'Centro Comunitario de Salud Familiar Dr. Miguel Enríquez Espinosa',
-                    'CECOSF Dr. Miguel Enríquez Espinosa', cesfam),
+    cesfam = ifelse(cesfam == 'CECOSF Dr. Miguel Enríquez Espinosa',
+                    'Centro Comunitario de Salud Familiar Dr. Miguel Enríquez Espinosa', cesfam),
+    cesfam = ifelse(cesfam == 'CECOSF Eduardo Frei Montalva',
+                    'Centro Comunitario de Salud Familiar Eduardo Frei Montalva', cesfam),
     fecha_solicitud = as.Date(fecha_solicitud, format='%d-%m-%Y %H:%M'),
     fecha_cierre = as.Date(fecha_cierre, format='%d-%m-%Y %H:%M'),
     fecha_agenda  = as.Date(fecha_agenda, format='%d-%m-%Y %H:%M')
     )
-
 
 cesfam <- as.data.frame(unique(data2$cesfam)) %>%
   rename(centro = 'unique(data2$cesfam)') %>%
@@ -64,6 +67,6 @@ data2 <- data2 %>%
     across(where(is.character), ~ str_replace_all(., regex("calera de tango", ignore_case = TRUE), "Calera De Tango"))
   )
 
-export(data2,'telesalud_tableau_enero2025.csv')
+export(data2,'telesalud_tableau_abril2025.csv')
 
 
