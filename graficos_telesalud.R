@@ -121,7 +121,7 @@ graf_promedio_por_prestador<- ggplot(promedio_diasalcierre_prest_long,
   geom_col(position = position_dodge()) +
   labs(title = "Media de días de espera comunal para el cierre, según prestador",
        subtitle = paste0('Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
-       x = "Comuna",
+       x = "Centro",
        y = "Días",
        fill = "Prestador") +
   custom_theme + 
@@ -129,6 +129,21 @@ graf_promedio_por_prestador<- ggplot(promedio_diasalcierre_prest_long,
   scale_colour_tableau("Tableau 20")
 
 graf_promedio_por_prestador
+
+graf_promedio_por_otroprestador<- ggplot(promedio_diasalcierre_otrosprest_long, 
+                                         aes(x = centro, y = Mean_Days, 
+                                             fill = factor(Prestador))) +
+  geom_col(position = position_dodge()) +
+  labs(title = "Media de días de espera comunal para el cierre (otros prestadores)",
+       subtitle = paste0('Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
+       x = "Centro",
+       y = "Días",
+       fill = "Prestador") +
+  custom_theme + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  scale_colour_tableau("Tableau 20")
+
+graf_promedio_por_otroprestador
 
 
 # Gráfico 7:  Tipos de cierre  ----
