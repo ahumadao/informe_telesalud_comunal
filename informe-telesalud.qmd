@@ -192,6 +192,7 @@ En el siguiente gráfico se observan las medias por establecimiento de tiempo de
 ```{r, echo=FALSE, include=TRUE, warning=FALSE, message=FALSE}
 
 graf_promedio_por_prestador
+graf_promedio_por_otroprestador
 ```
 
 ## Tipos de cierre
