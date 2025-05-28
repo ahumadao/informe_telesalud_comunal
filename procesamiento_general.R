@@ -16,7 +16,7 @@ pacman::p_load(
 
 ####################### Importo los datos ########################################
 
-data <- import('data/base_enero_2025.csv') %>% clean_names()
+data <- import('data/base_abril_2025.csv') %>% clean_names()
 piv <- import('data/piv2024.xlsx') %>% clean_names()
 deis <- import('data/deis_ssms.xlsx') %>% clean_names() %>% rename(centro = nombre_oficial,comuna = nombre_comuna, codigo_centro = codigo_vigente)
 
@@ -77,12 +77,16 @@ data1 <- data %>%
     ##Cambio los nombres para join con base deis##
     centro = ifelse(centro == 'CESFAM Eduardo Frei Montalva',
     'Centro de Salud Familiar Eduardo Frei Montalva', centro),
-    centro = ifelse(centro == 'Centro Comunitario de Salud Familiar Dr. Salvador Allende',
-    'Centro Comunitario de Salud Familiar Juan Aravena', centro),
+    centro = ifelse(centro == 'Centro Comunitario de Salud Familiar Juan Aravena',
+    'Centro Comunitario de Salud Familiar Dr. Salvador Allende', centro),
     centro = ifelse(centro == 'Centro de Salud Familiar Juan Pablo II',
     'Centro de Salud Familiar Juan Pablo II ( San Bernardo)', centro),
-    centro = ifelse(centro == 'Centro Comunitario de Salud Familiar Dr. Miguel Enríquez Espinosa',
-    'CECOSF Dr. Miguel Enríquez Espinosa', centro)) %>%
+    centro = ifelse(centro == 'CECOSF Juan Aravena',
+    'Centro Comunitario de Salud Familiar Dr. Salvador Allende', centro),
+    centro = ifelse(centro == 'CECOSF Eduardo Frei Montalva',
+    'Centro Comunitario de Salud Familiar Eduardo Frei Montalva', centro),
+    centro = ifelse(centro == 'CECOSF Dr. Miguel Enríquez Espinosa',
+    'Centro Comunitario de Salud Familiar Dr. Miguel Enríquez Espinosa', centro)) %>%
   filter(fecha_solicitud < first_day_this_month) %>%
   left_join(deis %>% select(codigo_centro, comuna, centro)) %>%
   select(
