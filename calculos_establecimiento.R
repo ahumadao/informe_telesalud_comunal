@@ -243,7 +243,15 @@ calculate_mean_days_prest <- function(data, prest, start_date, end_date) {
 promedio_diasalcierre_med <- calculate_mean_days_prest(comuna1, 'Medicina', start_date, end_date)
 promedio_diasalcierre_mat <- calculate_mean_days_prest(comuna1, 'Matrona', start_date, end_date)
 promedio_diasalcierre_dent <- calculate_mean_days_prest(comuna1, 'Dental', start_date, end_date)
-promedio_diasalcierre_otros <- calculate_mean_days_prest(comuna1, 'Otros prestadores', start_date, end_date)
+
+#Calculate mean days for each priority Otros prestadores
+promedio_diasalcierre_aso <- calculate_mean_days_prest(comuna1, 'Asistente Social', start_date, end_date)
+promedio_diasalcierre_kin <- calculate_mean_days_prest(comuna1, 'Kinesiología', start_date, end_date)
+promedio_diasalcierre_enf <- calculate_mean_days_prest(comuna1, 'Enfermería', start_date, end_date)
+promedio_diasalcierre_nut <- calculate_mean_days_prest(comuna1, 'Nutrición', start_date, end_date)
+promedio_diasalcierre_psi <- calculate_mean_days_prest(comuna1, 'Psicología', start_date, end_date)
+promedio_diasalcierre_to <- calculate_mean_days_prest(comuna1, 'Terapia Ocupacional', start_date, end_date)
+promedio_diasalcierre_ten <- calculate_mean_days_prest(comuna1, 'Técnico en enfermería', start_date, end_date)
 
 # Combine the mean days data for each priority
 promedio_diasalcierre_todoprest <- promedio_diasalcierre_med %>%
@@ -355,7 +363,7 @@ proporcion_pendientes_comuna <- comuna1 %>%
 # [USO] Tipos de cierre ultimo año ####### ----
 
 tipos_de_cierre <- comuna1 %>%
-  filter((fecha_cierre > last_day_previous_month %m-% months(12)), !is.na(fecha_cierre)) %>%
+  filter((fecha_cierre > anno), !is.na(fecha_cierre), fecha_cierre < first_day_this_month) %>%
   group_by(centro, tipo_cierre) %>%
   summarize(cierres = n()) %>%
   left_join(n_cierres_mensual_establecimiento %>%
