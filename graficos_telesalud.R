@@ -40,7 +40,7 @@ graf_mensual_sol_comuna_historico <- ggplot(tasa_solicitudes_mensual_comuna, aes
   labs(x = "Fecha", 
        y = "Cantidad de Solicitudes", 
        title = paste0("Cantidad de solicitudes por mes. Comuna de ", comuna_en_uso, '.'),
-       subtitle = 'Incluye media suavizada (en celeste). Plataforma Telesalud. SSMS. 2021-2024') +
+       subtitle = 'Incluye media suavizada (en celeste). Plataforma Telesalud. SSMS. 2021-2025') +
   custom_theme +
   scale_colour_tableau("Tableau 20")
 
@@ -56,7 +56,7 @@ graf_mensual_sol_estab <- ggplot(tasa_solicitudes_mensual_establecimiento,
   labs(x = "Fecha", 
        y = "Cantidad de Solicitudes", 
        title = "Evolución de solicitudes de atención por establecimiento",
-       subtitle = paste0('Media suavizada. Plataforma Telesalud. ', comuna_en_uso, ' .SSMS. 2021-2024'),
+       subtitle = paste0('Media suavizada. Plataforma Telesalud. ', comuna_en_uso, ' .SSMS. 2021-2025'),
        color = 'Centro') +
   custom_theme + 
   scale_colour_tableau("Tableau 20")
@@ -73,7 +73,7 @@ graf_mensual_sol_estab_suavizado_piv <- ggplot(tasa_solicitudes_mensual_establec
   geom_smooth(method = "loess", se = FALSE, linewidth=0.5, span = 0.3) +
   labs(x = "Fecha", y = "Cantidad/1000 personas inscritas", 
        title = "Tasa de solicitudes por cada 1000 personas inscritas.",
-       subtitle = paste0('Media suavizada. Por establecimiento. \nPlataforma Telesalud. ', comuna_en_uso, ' .SSMS. 2021-2024'),
+       subtitle = paste0('Media suavizada. Por establecimiento. \nPlataforma Telesalud. ', comuna_en_uso, ' .SSMS. 2021-2025'),
        color = 'Centro') +
   custom_theme + 
   scale_colour_tableau("Tableau 20")
@@ -88,7 +88,7 @@ graf_mensual_diasalcierre_establecimiento <- ggplot(promedio_dias_al_cierre_mens
   geom_smooth(method = "loess", se = FALSE) +
   labs(x = "Fecha", y = "Días de espera (promedio mensual)", 
        title = 'Media mensual de días de espera \n al cierre de solicitudes por establecimiento',
-       subtitle = paste0('Plataforma Telesalud. Gráfico suavizado. ',comuna_en_uso,'. SSMS. 2024'),
+       subtitle = paste0('Plataforma Telesalud. Gráfico suavizado. ',comuna_en_uso,'. SSMS. 2025'),
        color = 'Centro') +
   custom_theme +
   scale_colour_tableau("Tableau 20")
@@ -103,7 +103,7 @@ graf_promedio_por_prioridad <- ggplot(promedio_dias_al_cierre_prioridad_establec
                                           fill = factor(Priority))) +
   geom_col(position = position_dodge()) +
   labs(title = "Media de días de espera para el cierre por establecimiento, según prioridad",
-       subtitle = paste0('Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
+       subtitle = paste0('Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
        x = "Centro",
        y = "Días",
        fill = "Prioridad") +
@@ -120,7 +120,7 @@ graf_promedio_por_prestador<- ggplot(promedio_diasalcierre_prest_long,
                                          fill = factor(Prestador))) +
   geom_col(position = position_dodge()) +
   labs(title = "Media de días de espera comunal para el cierre, según prestador",
-       subtitle = paste0('Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
+       subtitle = paste0('Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
        x = "Comuna",
        y = "Días",
        fill = "Prestador") +
@@ -135,7 +135,7 @@ graf_promedio_por_otroprestador<- ggplot(promedio_diasalcierre_otrosprest_long,
                                              fill = factor(Prestador))) +
   geom_col(position = position_dodge()) +
   labs(title = "Media de días de espera comunal para el cierre (otros prestadores)",
-       subtitle = paste0('Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
+       subtitle = paste0('Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
        x = "Comuna",
        y = "Días",
        fill = "Prestador") +
@@ -159,7 +159,7 @@ graf_tiposdecierre<- ggplot(tipos_de_cierre,aes(x = centro, y = prop_tipo_cierre
             size = 2,  # Increase text size
             color = 'gray25') +
   labs(title = "Proporción de tipos de cierre por establecimiento",
-       subtitle = paste0('Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
+       subtitle = paste0('Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
        x = "Centro",
        y = "Proporción",
        fill = "Tipo de cierre") +
@@ -187,7 +187,7 @@ graf_mensual_cierre_comuna <- ggplot(tasa_solicitudes_mensual_establecimiento, a
   geom_line(aes(y = n_cierre, color = Comuna)) +
   labs(x = "Fecha", y = "Cantidad de cierre de solicitudes", 
        title = "Cierres de solicitudes de Telesalud por comuna",
-       subtitle = 'Plataforma Telesalud.SSMS. 2021-2024',
+       subtitle = 'Plataforma Telesalud.SSMS. 2021-2025',
        color = 'Comuna') +
   custom_theme + 
   scale_colour_tableau("Tableau 20")
@@ -208,7 +208,7 @@ graf_mensual_prop_estab <- ggplot(proporcion_cierre_por_solicitud_mensual_establ
               , span = 0.7, alpha = 0.2, color = '#8d3f9b')+
   labs(x = "Fecha", y = "Proporción de cierres por solicitud", 
        title = "Proporción de cierres por solicitud,\n por establecimiento",
-       subtitle = paste0('Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
+       subtitle = paste0('Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
        color = 'Centro') +
   custom_theme + 
   scale_colour_tableau("Tableau 20") +
@@ -228,7 +228,7 @@ graf_mensual_prop_comuna_tendencia_medico <- ggplot(z_proporcion_cierre_por_soli
   geom_smooth(method = "loess", se = FALSE, span=0.2) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes\npor prestador - Medicina',
-       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
+       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
        color = 'Centro') +
   custom_theme + 
   scale_colour_tableau("Tableau 20")
@@ -242,7 +242,7 @@ graf_mensual_prop_comuna_tendencia_odonto <- ggplot(z_proporcion_cierre_por_soli
   geom_smooth(method = "loess", se = FALSE, span=0.2) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes \npor prestador - Odontología',
-       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
+       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
        color = 'Centro') +
   custom_theme + 
   scale_colour_tableau("Tableau 20")
@@ -257,7 +257,7 @@ graf_mensual_prop_comuna_tendencia_matrona<- ggplot(z_proporcion_cierre_por_soli
   geom_smooth(method = "loess", se = FALSE, span=0.2) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes \npor prestador - Matrona',
-       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
+       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
        color = 'Centro') +
   custom_theme + 
   scale_colour_tableau("Tableau 20")
@@ -271,7 +271,7 @@ graf_mensual_prop_comuna_tendencia_asistente_social<- ggplot(z_proporcion_cierre
   geom_smooth(method = "loess", se = FALSE, span=0.2) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes \npor prestador - Asistente Social',
-       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
+       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
        color = 'Centro') +
   custom_theme + 
   scale_colour_tableau("Tableau 20")
@@ -285,7 +285,7 @@ graf_mensual_prop_comuna_tendencia_enfermeria<- ggplot(z_proporcion_cierre_por_s
   geom_smooth(method = "loess", se = FALSE, span=0.2) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes \npor prestador - Enfermería',
-       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
+       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
        color = 'Centro') +
   custom_theme + 
   scale_colour_tableau("Tableau 20")
@@ -299,7 +299,7 @@ graf_mensual_prop_comuna_tendencia_kinesiologia<- ggplot(z_proporcion_cierre_por
   geom_smooth(method = "loess", se = FALSE, span=0.2) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes \npor prestador - Kinesiología',
-       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
+       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
        color = 'Centro') +
   custom_theme + 
   scale_colour_tableau("Tableau 20")
@@ -313,7 +313,7 @@ graf_mensual_prop_comuna_tendencia_nutricion<- ggplot(z_proporcion_cierre_por_so
   geom_smooth(method = "loess", se = FALSE, span=0.2) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes \npor prestador - Enfermería',
-       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
+       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
        color = 'Centro') +
   custom_theme + 
   scale_colour_tableau("Tableau 20")
@@ -327,7 +327,7 @@ graf_mensual_prop_comuna_tendencia_psicología<- ggplot(z_proporcion_cierre_por_
   geom_smooth(method = "loess", se = FALSE, span=0.2) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes \npor prestador - Psicología',
-       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
+       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
        color = 'Centro') +
   custom_theme + 
   scale_colour_tableau("Tableau 20")
@@ -341,7 +341,7 @@ graf_mensual_prop_comuna_tendencia_tens<- ggplot(z_proporcion_cierre_por_solicit
   geom_smooth(method = "loess", se = FALSE, span=0.2) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes \npor prestador - Técnico en enfermería',
-       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
+       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
        color = 'Centro') +
   custom_theme + 
   scale_colour_tableau("Tableau 20")
@@ -355,7 +355,7 @@ graf_mensual_prop_comuna_tendencia_to<- ggplot(z_proporcion_cierre_por_solicitud
   geom_smooth(method = "loess", se = FALSE, span=0.2) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes \npor prestador - Terapia Ocupacional',
-       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
+       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
        color = 'Centro') +
   custom_theme + 
   scale_colour_tableau("Tableau 20")
@@ -372,7 +372,7 @@ graf_mensual_prop_comuna_tendencia_to
 #   geom_smooth(method = "loess", se = FALSE) +
 #   labs(x = "Fecha", y = "Cantidad de Solicitudes", 
 #        title = "Solicitudes de Telesalud por comuna (suavizado)",
-#        subtitle = paste0('Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
+#        subtitle = paste0('Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
 #        color = 'Comuna') +
 #   custom_theme + 
 #   scale_colour_tableau("Tableau 20")
@@ -386,7 +386,7 @@ graf_mensual_prop_comuna_tendencia_to
 #   geom_smooth(method = "loess", se = FALSE) +
 #   labs(x = "Fecha", y = "Cantidad de solicitudes", 
 #        title = "Cantidad de solicitudes promedio por mes. SSMS. (suavizado).",
-#        subtitle = 'Plataforma Telesalud. SSMS. 2021-2024.',
+#        subtitle = 'Plataforma Telesalud. SSMS. 2021-2025.',
 #        color = 'Comuna') +
 #   custom_theme + 
 #   scale_colour_tableau("Tableau 20")
@@ -400,7 +400,7 @@ graf_mensual_prop_comuna_tendencia_to
 #   geom_smooth(method = "loess", se = FALSE) +
 #   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
 #        title = 'Proporción de cierres por solicitud',
-#        subtitle = 'Plataforma Telesalud. Gráfico suavizado. SSMS. 2023-2024',
+#        subtitle = 'Plataforma Telesalud. Gráfico suavizado. SSMS. 2023-2025',
 #        color = 'Comuna') +
 #   custom_theme + 
 #   scale_colour_tableau("Tableau 20")
@@ -416,7 +416,7 @@ graf_mensual_prop_comuna_tendencia_to
 #   geom_smooth(method = "loess", se = FALSE) +
 #   labs(x = "Fecha", y = "Días de espera (promedio)", 
 #        title = 'Media de días de espera al cierre de solicitudes',
-#        subtitle = 'Plataforma Telesalud. Gráfico suavizado. SSMS. 2024',
+#        subtitle = 'Plataforma Telesalud. Gráfico suavizado. SSMS. 2025',
 #        color = 'Comuna') +
 #   custom_theme +
 #   scale_colour_tableau("Tableau 20")
@@ -430,7 +430,7 @@ graf_mensual_prop_comuna_tendencia_to
 #   geom_line(aes(y = mean_sol),linewidth=0.5, color='#4E79A7') +
 #   labs(x = "Fecha", y = "Cantidad de Solicitudes.", 
 #        title = "Cantidad de solicitudes por mes. SSMS.",
-#        subtitle = 'Media suavizada. Plataforma Telesalud. SSMS. 2021-2024',
+#        subtitle = 'Media suavizada. Plataforma Telesalud. SSMS. 2021-2025',
 #        color = 'Comuna') +
 #   custom_theme + 
 #   scale_colour_tableau("Tableau 20")
@@ -442,7 +442,7 @@ graf_mensual_prop_comuna_tendencia_to
 #   geom_smooth(method = "loess", se = FALSE, linewidth=0.5, color='#A0CBE8') +
 #   labs(x = "Fecha", y = "Cantidad de Solicitudes.", 
 #        title = "Media cantidad de solicitudes por mes. SSMS.",
-#        subtitle = 'Media suavizada. Plataforma Telesalud. SSMS. 2021-2024',
+#        subtitle = 'Media suavizada. Plataforma Telesalud. SSMS. 2021-2025',
 #        color = 'Comuna') +
 #   custom_theme + 
 #   scale_colour_tableau("Tableau 20")
