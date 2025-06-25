@@ -16,7 +16,7 @@ pacman::p_load(
 
 ####################### Importo los datos ########################################
 
-data <- import('data/base_abril_2025.csv') %>% clean_names() 
+data <- import('data/base_junio_2025.csv') %>% clean_names() 
 piv <- import('data/piv2024.xlsx') %>% clean_names()
 deis <- import('data/deis_ssms.xlsx') %>% clean_names() %>% rename(centro = nombre_oficial,comuna = nombre_comuna, codigo_centro = codigo_vigente)
 
@@ -67,6 +67,6 @@ data2 <- data2 %>%
     across(where(is.character), ~ str_replace_all(., regex("calera de tango", ignore_case = TRUE), "Calera De Tango"))
   )
 
-export(data2,'telesalud_tableau_abril2025.csv')
+export(data2,'telesalud_tableau_junio2025.csv')
 
 
