@@ -52,15 +52,15 @@ piv_comuna$`PIV 2024` <- comma(piv_comuna$piv_2024)
 
 El objetivo de este informe es entregar una mirada global del funcionamiento de la estrategia Telesalud en los establecimientos de la comuna de `r comuna_en_uso` del Servicio de Salud Metropolitano Sur (SSMS).
 
-La población inscrita validada total en el SSMS, correspondiente al año 2024, fue de `r total_piv_2024_formato` personas. Para la comuna de `r comuna_en_uso` fue de `r comma(as.numeric(piv_comuna1$piv_2024))` , lo que corresponde a un `r comma(round(as.numeric(piv_comuna1$piv_2024)/total_piv_2024 *100,2))`% de la población de SSMS. La PIV del 2024 para esta comuna desagregada por establecimiento se menciona en la siguiente tabla.
+La población inscrita validada total en el SSMS, correspondiente al año 2025, fue de `r total_piv_2024_formato` personas. Para la comuna de `r comuna_en_uso` fue de `r comma(as.numeric(piv_comuna1$piv_2024))` , lo que corresponde a un `r comma(round(as.numeric(piv_comuna1$piv_2024)/total_piv_2024 *100,2))`% de la población de SSMS. La PIV del 2025 para esta comuna desagregada por establecimiento se menciona en la siguiente tabla.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, include=TRUE}
 kable(piv_estab %>% filter(comuna == comuna1$comuna[1]) %>% 
         select(centro, piv_2024) %>%
         arrange(desc(piv_2024)) %>%
         mutate(piv_2024 = comma(piv_2024)) %>%
-        setNames(c('Centro','PIV 2024')), 
-      longtable = TRUE, align = 'cc', caption = 'Población inscrita validada. 2024. Por establecimiento.')
+        setNames(c('Centro','PIV 2025')), 
+      longtable = TRUE, align = 'cc', caption = 'Población inscrita validada. 2025. Por establecimiento.')
 
 ```
 
@@ -98,11 +98,11 @@ Todos los datos de este utilizados fueron obtenidos de la plataforma de gestión
 
 ## Solicitudes Totales
 
-A la fecha de corte de los datos de este informe (`r format(last_day_previous_month, format='%d-%m-%Y')`) , en el SSMS se había recibido por Telesalud un total de `r comma(nrow(data1))` solicitudes. En la comuna de `r comuna_en_uso`, se había recibido un total de `r comma(nrow(comuna1))`. Las solicitudes totales junto con la tasa por cada 1000 personas inscritas validadas de cada establecimiento se desagregan a continuación.
+A la fecha de corte de los datos de este informe (`r format(last_day_previous_month, format='%d-%m-%Y')`) , desde 2021, en el SSMS se había recibido por Telesalud un total de `r comma(nrow(data1))` solicitudes. En la comuna de `r comuna_en_uso`, se había recibido un total de `r comma(nrow(comuna1))`. Las solicitudes totales junto con la tasa por cada 1000 personas inscritas validadas de cada establecimiento se desagregan a continuación.
 
 ```{r, echo=FALSE, include=TRUE}
 
-names(total_sol_centro) <- c('Centro','Total de solicitudes','PIV 2024', 'N°solicitudes/1000 personas/mes')
+names(total_sol_centro) <- c('Centro','Total de solicitudes','PIV 2025', 'N°solicitudes/1000 personas/mes')
 
 
 kable(total_sol_centro, align = 'cccc', caption = 'Cantidad de solicitudes de atención por establecimiento  y Tasa de solicitudes por cada 1000 personas, estandarizada por cantidad de meses de implementación de la estrategia. 2025. ',longtable = TRUE)
