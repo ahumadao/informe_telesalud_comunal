@@ -98,7 +98,7 @@ Todos los datos de este utilizados fueron obtenidos de la plataforma de gestión
 
 ## Solicitudes Totales
 
-A la fecha de corte de los datos de este informe (`r format(last_day_previous_month, format='%d-%m-%Y')`) , desde 2021, en el SSMS se había recibido por Telesalud un total de `r comma(nrow(data1))` solicitudes. En la comuna de `r comuna_en_uso`, se había recibido un total de `r comma(nrow(comuna1))`. Las solicitudes totales junto con la tasa por cada 1000 personas inscritas validadas de cada establecimiento se desagregan a continuación.
+Desde 2021 a la fecha de corte de los datos de este informe (`r format(last_day_previous_month, format='%d-%m-%Y')`) , en el SSMS se había recibido por Telesalud un total de `r comma(nrow(data1))` solicitudes. En la comuna de `r comuna_en_uso`, se había recibido un total de `r comma(nrow(comuna1))`. Las solicitudes totales junto con la tasa por cada 1000 personas inscritas validadas de cada establecimiento se desagregan a continuación.
 
 ```{r, echo=FALSE, include=TRUE}
 
@@ -308,5 +308,5 @@ graf_mensual_prop_comuna_tendencia_enfermeria
 graf_mensual_prop_comuna_tendencia_kinesiologia
 graf_mensual_prop_comuna_tendencia_nutricion
 graf_mensual_prop_comuna_tendencia_tens
-graf_mensual_prop_comuna_tendencia_terapia_ocupacional
+graf_mensual_prop_comuna_tendencia_to
 ```
