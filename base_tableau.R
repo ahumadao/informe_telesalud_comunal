@@ -17,7 +17,7 @@ pacman::p_load(
 ####################### Importo los datos ########################################
 
 data <- import('data/base_junio_2025.csv') %>% clean_names() 
-piv <- import('data/piv2024.xlsx') %>% clean_names()
+piv <- import('data/piv2025.xlsx') %>% clean_names()
 deis <- import('data/deis_ssms.xlsx') %>% clean_names() %>% rename(centro = nombre_oficial,comuna = nombre_comuna, codigo_centro = codigo_vigente)
 
 ####################### gestionar bases ###################################################
@@ -37,12 +37,15 @@ data2 <- data %>%
                     'Centro de Salud Familiar Juan Pablo II ( San Bernardo)', cesfam),
     cesfam = ifelse(cesfam == 'CECOSF Dr. Miguel Enríquez Espinosa',
                     'Centro Comunitario de Salud Familiar Dr. Miguel Enríquez Espinosa', cesfam),
+    cesfam = ifelse(cesfam == ' Comunitario De Salud Familiar Cerrillos De Nos',
+                    'Centro Comunitario de Salud Familiar Ribera del Maipo', cesfam),
     cesfam = ifelse(cesfam == 'CECOSF Eduardo Frei Montalva',
                     'Centro Comunitario de Salud Familiar Eduardo Frei Montalva', cesfam),
     fecha_solicitud = as.Date(fecha_solicitud, format='%d-%m-%Y %H:%M'),
     fecha_cierre = as.Date(fecha_cierre, format='%d-%m-%Y %H:%M'),
     fecha_agenda  = as.Date(fecha_agenda, format='%d-%m-%Y %H:%M')
-    )
+  )
+
 
 cesfam <- as.data.frame(unique(data2$cesfam)) %>%
   rename(centro = 'unique(data2$cesfam)') %>%
@@ -53,7 +56,7 @@ cesfam <- as.data.frame(unique(data2$cesfam)) %>%
   left_join(piv %>% select(codigo_centro, inscritos) %>% 
               group_by(codigo_centro) %>%
               summarise(n=sum(inscritos)), by = 'codigo_centro')
-            
+
 
 data2 <- data2 %>%
   left_join(
@@ -62,7 +65,7 @@ data2 <- data2 %>%
   mutate(
     across(where(is.character), ~ str_replace_all(., regex("Centro de Salud Familiar", ignore_case = TRUE), "CESFAM")),
     across(where(is.character), ~ str_replace_all(., regex("Centro Comunitario de Salud Familiar", ignore_case = TRUE), "CECOSF")),
-    across(where(is.character), ~ str_replace_all(., regex("Centro Comunitario De Salud Familia", ignore_case = TRUE), "CECOSF")),
+    across(where(is.character), ~ str_replace_all(., regex("Centro Comunitario De Salud Familiar", ignore_case = TRUE), "CECOSF")),
     across(where(is.character), ~ str_replace_all(., regex("Posta de Salud Rural", ignore_case = TRUE), "PSR")),
     across(where(is.character), ~ str_replace_all(., regex("calera de tango", ignore_case = TRUE), "Calera De Tango"))
   )
