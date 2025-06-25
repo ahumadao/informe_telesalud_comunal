@@ -25,10 +25,11 @@ pacman::p_load(
 # 2. Definir comuna ----
 
 
-n <- 4
+n <- 1
 
 
 comuna1 <- data_por_comuna[[n]] %>%
+  #filter( str_detect( centro, "Raúl Cuevas")) %>%
   mutate(across(where(is.character), ~ str_replace_all(., regex("Centro de Salud Familiar", ignore_case = TRUE), "CESFAM")),
          across(where(is.character), ~ str_replace_all(., regex("Centro Comunitario de Salud Familiar", ignore_case = TRUE), "CECOSF")),
          across(where(is.character), ~ str_replace_all(., regex("Centro Comunitario De Salud Familia", ignore_case = TRUE), "CECOSF")),
@@ -86,7 +87,7 @@ tasa_solicitudes_mensual_comuna <- tasa_solicitudes_mensual_establecimiento %>%
 
 n_cierres_mensual_establecimiento <- comuna1 %>%
   filter(!is.na(fecha_cierre)) %>% 
-  group_by(month_year_cierre, codigo_centro, centro,comuna) %>%
+  group_by(month_year_cierre, codigo_centro, centro, comuna) %>%
   summarize(n_cierre = n()) %>%
   rename(date = month_year_cierre) %>% 
   filter(date < as.Date(first_day_this_month)) %>%
@@ -253,17 +254,33 @@ promedio_diasalcierre_psi <- calculate_mean_days_prest(comuna1, 'Psicología', s
 promedio_diasalcierre_to <- calculate_mean_days_prest(comuna1, 'Terapia Ocupacional', start_date, end_date)
 promedio_diasalcierre_ten <- calculate_mean_days_prest(comuna1, 'Técnico en enfermería', start_date, end_date)
 
+
 # Combine the mean days data for each priority
 promedio_diasalcierre_todoprest <- promedio_diasalcierre_med %>%
   left_join(promedio_diasalcierre_mat, by = 'centro') %>%
-  left_join(promedio_diasalcierre_dent, by = 'centro') %>% 
-  left_join(promedio_diasalcierre_otros, by = 'centro') 
+  left_join(promedio_diasalcierre_dent, by = 'centro')
+
+# Combine the mean days data for each priority otros prestadores
+promedio_diasalcierre_otrosprest <- promedio_diasalcierre_aso %>%
+  left_join(promedio_diasalcierre_kin, by = 'centro') %>%
+  left_join(promedio_diasalcierre_enf, by = 'centro') %>% 
+  left_join(promedio_diasalcierre_nut, by = 'centro') %>%
+  left_join(promedio_diasalcierre_psi, by = 'centro') %>%
+  left_join(promedio_diasalcierre_to, by = 'centro') %>%
+  left_join(promedio_diasalcierre_ten, by = 'centro')
 
 # Reshape the data to long format
 promedio_diasalcierre_prest_long <- promedio_diasalcierre_todoprest %>%
-  pivot_longer(cols = c('Medicina', 'Matrona', 'Dental', 'Otros prestadores'),
+  pivot_longer(cols = c('Medicina','Matrona', 'Dental'),
                names_to = "Prestador",
                values_to = "Mean_Days")
+
+# Reshape the data to long format otros prestadores
+promedio_diasalcierre_otrosprest_long <- promedio_diasalcierre_otrosprest %>%
+  pivot_longer(cols = c('Asistente Social', 'Kinesiología', 'Enfermería', 'Nutrición', 'Psicología', 'Terapia Ocupacional','Técnico en enfermería'),
+               names_to = "Prestador",
+               values_to = "Mean_Days")
+
 
 promedio_espera_prestador_comuna <- comuna1 %>%
   filter(estado == 'Cerrada', 
@@ -276,7 +293,7 @@ promedio_espera_prioridad_comuna <- comuna1 %>%
   filter(estado == 'Cerrada',
          prioridad != 4,
          fecha_cierre < as.Date(first_day_this_month), 
-        fecha_cierre > last_day_previous_month %m-% months(12)) %>%
+         fecha_cierre > last_day_previous_month %m-% months(12)) %>%
   group_by(prioridad) %>%
   summarise(`Días de espera` = comma(round(mean(dias_al_cierre, na.rm = TRUE), 2)))
 
@@ -321,7 +338,7 @@ total_sol_centro_bruto <- comuna1 %>%
 
 proporcion_pendientes_centro_ano <- comuna1 %>%
   filter(estado == 'Pendiente',
-           fecha_solicitud > anno) %>% 
+         fecha_solicitud > anno) %>% 
   group_by(centro, estado) %>%
   summarize(n_sol = n()) %>%
   left_join(total_sol_centro_bruto, by = 'centro') %>%
@@ -403,8 +420,8 @@ tabla_dias_sol_cierre_agenda_establecimiento <- comuna1 %>%
     dias_cierre_agenda != 0,
     prioridad != 4,
     tipo_cierre %in% c('Agendado para atención presencial', 
-                         'Agendado para atención por telemedicina', 
-                         'Agendado para orden de examen'), 
+                       'Agendado para atención por telemedicina', 
+                       'Agendado para orden de examen'), 
   )%>%
   group_by(`centro`) %>%
   summarise(
@@ -669,10 +686,9 @@ z_proporcion_cierre_por_solicitud_tens_mensual_establecimiento <- proporcion_cie
   filter(date > mesesatras_12) %>% 
   filter(tipo_prestador == 'Técnico en enfermería')
 
-z_proporcion_cierre_por_solicitud_terapia_ocupacional_mensual_establecimiento <- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento %>%
+z_proporcion_cierre_por_solicitud_to_mensual_establecimiento <- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento %>%
   mutate(cie_sol = ifelse(is.na(cie_sol), 0, cie_sol)) %>%
   filter(date > mesesatras_12) %>% 
   filter(tipo_prestador == 'Terapia Ocupacional')
-
 
 proporcion_pendientes_centro_ano <- proporcion_pendientes_centro_ano %>% arrange(desc(`Proporción de solicitudes pendientes`))

@@ -17,7 +17,7 @@ pacman::p_load(
 ####################### Importo los datos ########################################
 
 data <- import('data/base_abril_2025.csv') %>% clean_names()
-piv <- import('data/piv2024.xlsx') %>% clean_names()
+piv <- import('data/piv2025.xlsx') %>% clean_names()
 deis <- import('data/deis_ssms.xlsx') %>% clean_names() %>% rename(centro = nombre_oficial,comuna = nombre_comuna, codigo_centro = codigo_vigente)
 
 export(head(data),'data_enero_head.csv')
