@@ -29,7 +29,8 @@ piv_comuna <- piv %>%
   ungroup() %>%
   mutate(across(where(is.character), ~ str_replace_all(., regex("Centro de Salud Familiar", ignore_case = TRUE), "CESFAM")),
          across(where(is.character), ~ str_replace_all(., regex("Centro Comunitario de Salud Familiar", ignore_case = TRUE), "CECOSF")),
-         across(where(is.character), ~ str_replace_all(., regex("Centro Comunitario De Salud Familia", ignore_case = TRUE), "CECOSF")),
+         across(where(is.character), ~ str_replace_all(., regex("Centro Comunitario de Salud Familiar", ignore_case = TRUE), "CECOSF")),
+         across(where(is.character), ~ str_replace_all(., regex("Cerrillos De Nos", ignore_case = TRUE), "Ribera del Maipo")),
          across(where(is.character), ~ str_replace_all(., regex("Posta de Salud Rural", ignore_case = TRUE), "PSR")),
          across(where(is.character), ~ str_replace_all(., regex("Cecosf", ignore_case = TRUE), "CECOSF"))
   )
@@ -41,6 +42,7 @@ piv_estab <- piv %>%
   ungroup() %>%
   mutate(across(where(is.character), ~ str_replace_all(., regex("Centro de Salud Familiar", ignore_case = TRUE), "CESFAM")),
          across(where(is.character), ~ str_replace_all(., regex("Centro Comunitario de Salud Familiar", ignore_case = TRUE), "CECOSF")),
+         across(where(is.character), ~ str_replace_all(., regex("Cerrillos De Nos", ignore_case = TRUE), "Ribera del Maipo")),
          across(where(is.character), ~ str_replace_all(., regex("Centro Comunitario De Salud Familia", ignore_case = TRUE), "CECOSF")),
          across(where(is.character), ~ str_replace_all(., regex("Posta de Salud Rural", ignore_case = TRUE), "PSR"))
   )
@@ -56,9 +58,9 @@ last_day_previous_month <- rollback(first_day_this_month)
 
 data1 <- data %>%
   select(id,cesfam,prioridad,fecha_solicitud,direccion,
-          tipo_prestador,motivo_consulta,especificidad,
-          estado, fecha_cierre, tipo_cierre, cargo,
-          profesion, fecha_agenda) %>%
+         tipo_prestador,motivo_consulta,especificidad,
+         estado, fecha_cierre, tipo_cierre, cargo,
+         profesion, fecha_agenda) %>%
   rename(centro = cesfam) %>% 
   mutate(
     ##Gestiono las fechas##
@@ -76,17 +78,19 @@ data1 <- data %>%
     month_year_agenda = ymd(paste(year_agenda, month_agenda, "1", sep = "-")), 
     ##Cambio los nombres para join con base deis##
     centro = ifelse(centro == 'CESFAM Eduardo Frei Montalva',
-    'Centro de Salud Familiar Eduardo Frei Montalva', centro),
+                    'Centro de Salud Familiar Eduardo Frei Montalva', centro),
     centro = ifelse(centro == 'Centro Comunitario de Salud Familiar Juan Aravena',
-    'Centro Comunitario de Salud Familiar Dr. Salvador Allende', centro),
+                    'Centro Comunitario de Salud Familiar Dr. Salvador Allende', centro),
     centro = ifelse(centro == 'Centro de Salud Familiar Juan Pablo II',
-    'Centro de Salud Familiar Juan Pablo II ( San Bernardo)', centro),
+                    'Centro de Salud Familiar Juan Pablo II ( San Bernardo)', centro),
     centro = ifelse(centro == 'CECOSF Juan Aravena',
-    'Centro Comunitario de Salud Familiar Dr. Salvador Allende', centro),
+                    'Centro Comunitario de Salud Familiar Dr. Salvador Allende', centro),
     centro = ifelse(centro == 'CECOSF Eduardo Frei Montalva',
-    'Centro Comunitario de Salud Familiar Eduardo Frei Montalva', centro),
+                    'Centro Comunitario de Salud Familiar Eduardo Frei Montalva', centro),
+    centro = ifelse(centro == 'Centro Comunitario De Salud Familiar Cerrillos De Nos',
+                    'Centro Comunitario de Salud Familiar Ribera del Maipo', centro),
     centro = ifelse(centro == 'CECOSF Dr. Miguel Enríquez Espinosa',
-    'Centro Comunitario de Salud Familiar Dr. Miguel Enríquez Espinosa', centro)) %>%
+                    'Centro Comunitario de Salud Familiar Dr. Miguel Enríquez Espinosa', centro)) %>%
   filter(fecha_solicitud < first_day_this_month) %>%
   left_join(deis %>% select(codigo_centro, comuna, centro)) %>%
   select(
