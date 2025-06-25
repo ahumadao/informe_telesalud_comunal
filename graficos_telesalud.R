@@ -14,22 +14,22 @@ pacman::p_load(
 ####################### Custom Theme for plots   #######################
 
 custom_theme <- theme_minimal() + 
-                   theme(
-  plot.title = element_text(size = 10, face = "bold", hjust = 0.5),
-  plot.subtitle = element_text(size = 8, face = "italic", hjust = 0.5),
-  axis.title = element_text(size = 8),
-  axis.text = element_text(size = 6), 
-  legend.title = element_text(size = 7, face = "italic"),
-  legend.text = element_text(size = 5),
-  panel.grid.minor = element_blank(),
-  panel.border = element_blank(), 
-  axis.line = element_line(linewidth = 0.3, color = "black"), 
-  legend.background = element_rect(fill = "white"), 
-  legend.key = element_rect(fill = "white", color = NA),
-  legend.key.size = unit(0.5, "cm"),  # Adjust size of legend keys
-  legend.spacing.y = unit(0.01, "cm"),
-  legend.position = "right",
-  plot.margin = margin(20, 20, 20, 20))
+  theme(
+    plot.title = element_text(size = 10, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 8, face = "italic", hjust = 0.5),
+    axis.title = element_text(size = 8),
+    axis.text = element_text(size = 6), 
+    legend.title = element_text(size = 7, face = "italic"),
+    legend.text = element_text(size = 5),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(), 
+    axis.line = element_line(linewidth = 0.3, color = "black"), 
+    legend.background = element_rect(fill = "white"), 
+    legend.key = element_rect(fill = "white", color = NA),
+    legend.key.size = unit(0.5, "cm"),  # Adjust size of legend keys
+    legend.spacing.y = unit(0.01, "cm"),
+    legend.position = "right",
+    plot.margin = margin(20, 20, 20, 20))
 
 
 # Gráfico 1: Evolución histórica de solicitudes de atención ----
@@ -68,7 +68,7 @@ graf_mensual_sol_estab
 
 
 graf_mensual_sol_estab_suavizado_piv <- ggplot(tasa_solicitudes_mensual_establecimiento, 
-                                 aes(x = date, y = round(sol_per_capita,2), color = centro, group = centro)) +
+                                               aes(x = date, y = round(sol_per_capita,2), color = centro, group = centro)) +
   geom_line(linewidth = 0.5, alpha = 0.2 )  +
   geom_smooth(method = "loess", se = FALSE, linewidth=0.5, span = 0.3) +
   labs(x = "Fecha", y = "Cantidad/1000 personas inscritas", 
@@ -121,7 +121,7 @@ graf_promedio_por_prestador<- ggplot(promedio_diasalcierre_prest_long,
   geom_col(position = position_dodge()) +
   labs(title = "Media de días de espera comunal para el cierre, según prestador",
        subtitle = paste0('Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
-       x = "Centro",
+       x = "Comuna",
        y = "Días",
        fill = "Prestador") +
   custom_theme + 
@@ -136,7 +136,7 @@ graf_promedio_por_otroprestador<- ggplot(promedio_diasalcierre_otrosprest_long,
   geom_col(position = position_dodge()) +
   labs(title = "Media de días de espera comunal para el cierre (otros prestadores)",
        subtitle = paste0('Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
-       x = "Centro",
+       x = "Comuna",
        y = "Días",
        fill = "Prestador") +
   custom_theme + 
@@ -144,7 +144,6 @@ graf_promedio_por_otroprestador<- ggplot(promedio_diasalcierre_otrosprest_long,
   scale_colour_tableau("Tableau 20")
 
 graf_promedio_por_otroprestador
-
 
 # Gráfico 7:  Tipos de cierre  ----
 
@@ -200,7 +199,7 @@ graf_mensual_cierre_comuna
 
 graf_mensual_prop_estab <- ggplot(proporcion_cierre_por_solicitud_mensual_establecimiento %>%
                                     #rename(
-                                      #date = month_year_sol) %>% 
+                                    #date = month_year_sol) %>% 
                                     mutate(
                                       date= ymd(date)), 
                                   aes(x = date, y = proportion), color = centro, group=centro) +
@@ -351,20 +350,17 @@ graf_mensual_prop_comuna_tendencia_tens
 
 # Gráfico mensual proporción comuna suavizado Terapia Ocupacional
 
-graf_mensual_prop_comuna_tendencia_terapia_ocupacional<- ggplot(z_proporcion_cierre_por_solicitud_terapia_ocupacional_mensual_establecimiento, 
-                                                                aes(x = ymd(date), y=cie_sol , color = centro, group = centro)) +
+graf_mensual_prop_comuna_tendencia_to<- ggplot(z_proporcion_cierre_por_solicitud_to_mensual_establecimiento, 
+                                               aes(x = ymd(date), y=cie_sol , color = centro, group = centro)) +
   geom_smooth(method = "loess", se = FALSE, span=0.2) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
-       title = 'Proporción de cierre/solicitudes \npor prestador - Terapia ocupacional',
+       title = 'Proporción de cierre/solicitudes \npor prestador - Terapia Ocupacional',
        subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2024'),
        color = 'Centro') +
   custom_theme + 
   scale_colour_tableau("Tableau 20")
 
-graf_mensual_prop_comuna_tendencia_terapia_ocupacional
-
-
-
+graf_mensual_prop_comuna_tendencia_to
 
 
 #Varios ----
