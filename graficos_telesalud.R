@@ -31,6 +31,29 @@ custom_theme <- theme_minimal() +
     legend.position = "right",
     plot.margin = margin(20, 20, 20, 20))
 
+# Función para calcular span adaptativo según cantidad de datos
+calcular_span_adaptativo <- function(datos, grupo_var = "centro") {
+  # Contar observaciones por grupo
+  conteo_por_grupo <- datos %>%
+    group_by(!!sym(grupo_var)) %>%
+    summarise(n_obs = n(), .groups = 'drop')
+  
+  # Encontrar el mínimo de observaciones por grupo
+  min_obs <- min(conteo_por_grupo$n_obs)
+  max_obs <- max(conteo_por_grupo$n_obs)
+  
+  # Calcular span según cantidad de datos
+  span_calculado <- case_when(
+    min_obs <= 3 ~ 1.0,      # Muy pocos datos: máximo suavizado
+    min_obs <= 5 ~ 0.8,      # Pocos datos: alto suavizado  
+    min_obs <= 8 ~ 0.6,      # Datos moderados: suavizado medio-alto
+    min_obs <= 12 ~ 0.4,     # Buenos datos: suavizado medio
+    min_obs <= 20 ~ 0.3,     # Muchos datos: suavizado medio-bajo
+    TRUE ~ 0.2               # Datos abundantes: suavizado original
+  )
+
+  return(span_calculado)
+}
 
 # Gráfico 1: Evolución histórica de solicitudes de atención ----
 
@@ -223,9 +246,11 @@ graf_mensual_prop_estab
 
 #Gráfico mensual proporción comuna suavizado medico 
 
+span_optimo_med <- calcular_span_adaptativo(z_proporcion_cierre_por_solicitud_medico_mensual_establecimiento, "centro")
+
 graf_mensual_prop_comuna_tendencia_medico <- ggplot(z_proporcion_cierre_por_solicitud_medico_mensual_establecimiento, 
                                                     aes(x = ymd(date), y=cie_sol , color = centro, group = centro)) +
-  geom_smooth(method = "loess", se = FALSE, span=0.2) +
+  geom_smooth(method = "loess", se = FALSE, span=span_optimo_med) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes\npor prestador - Medicina',
        subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
@@ -237,9 +262,12 @@ graf_mensual_prop_comuna_tendencia_medico
 
 #Gráfico mensual proporción comuna suavizado odonto
 
+span_optimo_odo <- calcular_span_adaptativo(z_proporcion_cierre_por_solicitud_dental_mensual_establecimiento, "centro")
+
+
 graf_mensual_prop_comuna_tendencia_odonto <- ggplot(z_proporcion_cierre_por_solicitud_dental_mensual_establecimiento, 
                                                     aes(x = ymd(date), y=cie_sol , color = centro, group = centro)) +
-  geom_smooth(method = "loess", se = FALSE, span=0.2) +
+  geom_smooth(method = "loess", se = FALSE, span=span_optimo_odo) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes \npor prestador - Odontología',
        subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
@@ -252,9 +280,11 @@ graf_mensual_prop_comuna_tendencia_odonto
 
 # Gráfico mensual proporción comuna suavizado matrona
 
+span_optimo_mat <- calcular_span_adaptativo(z_proporcion_cierre_por_solicitud_matrona_mensual_establecimiento, "centro")
+
 graf_mensual_prop_comuna_tendencia_matrona<- ggplot(z_proporcion_cierre_por_solicitud_matrona_mensual_establecimiento, 
                                                     aes(x = ymd(date), y=cie_sol , color = centro, group = centro)) +
-  geom_smooth(method = "loess", se = FALSE, span=0.2) +
+  geom_smooth(method = "loess", se = FALSE, span=span_optimo_mat) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes \npor prestador - Matrona',
        subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
@@ -266,9 +296,11 @@ graf_mensual_prop_comuna_tendencia_matrona
 
 # Gráfico mensual proporción comuna suavizado Asistente Social
 
+span_optimo_aso <- calcular_span_adaptativo(z_proporcion_cierre_por_solicitud_asistente_social_mensual_establecimiento, "centro")
+
 graf_mensual_prop_comuna_tendencia_asistente_social<- ggplot(z_proporcion_cierre_por_solicitud_asistente_social_mensual_establecimiento, 
                                                              aes(x = ymd(date), y=cie_sol , color = centro, group = centro)) +
-  geom_smooth(method = "loess", se = FALSE, span=0.2) +
+  geom_smooth(method = "loess", se = FALSE, span=span_optimo_aso) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes \npor prestador - Asistente Social',
        subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
@@ -280,9 +312,11 @@ graf_mensual_prop_comuna_tendencia_asistente_social
 
 # Gráfico mensual proporción comuna suavizado Enfermería
 
+span_optimo_enf <- calcular_span_adaptativo(z_proporcion_cierre_por_solicitud_enfermeria_mensual_establecimiento, "centro")
+
 graf_mensual_prop_comuna_tendencia_enfermeria<- ggplot(z_proporcion_cierre_por_solicitud_enfermeria_mensual_establecimiento, 
                                                        aes(x = ymd(date), y=cie_sol , color = centro, group = centro)) +
-  geom_smooth(method = "loess", se = FALSE, span=0.2) +
+  geom_smooth(method = "loess", se = FALSE, span=span_optimo_enf) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes \npor prestador - Enfermería',
        subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
@@ -294,9 +328,11 @@ graf_mensual_prop_comuna_tendencia_enfermeria
 
 # Gráfico mensual proporción comuna suavizado Kinesiología
 
+span_optimo_kin <- calcular_span_adaptativo(z_proporcion_cierre_por_solicitud_kinesiologia_mensual_establecimiento, "centro")
+
 graf_mensual_prop_comuna_tendencia_kinesiologia<- ggplot(z_proporcion_cierre_por_solicitud_kinesiologia_mensual_establecimiento, 
                                                          aes(x = ymd(date), y=cie_sol , color = centro, group = centro)) +
-  geom_smooth(method = "loess", se = FALSE, span=0.2) +
+  geom_smooth(method = "loess", se = FALSE, span=span_optimo_kin) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes \npor prestador - Kinesiología',
        subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
@@ -308,9 +344,11 @@ graf_mensual_prop_comuna_tendencia_kinesiologia
 
 # Gráfico mensual proporción comuna suavizado Nutrición
 
+span_optimo_nut <- calcular_span_adaptativo(z_proporcion_cierre_por_solicitud_nutricion_mensual_establecimiento, "centro")
+
 graf_mensual_prop_comuna_tendencia_nutricion<- ggplot(z_proporcion_cierre_por_solicitud_nutricion_mensual_establecimiento, 
                                                       aes(x = ymd(date), y=cie_sol , color = centro, group = centro)) +
-  geom_smooth(method = "loess", se = FALSE, span=0.2) +
+  geom_smooth(method = "loess", se = FALSE, span=span_optimo_nut) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes \npor prestador - Nutrición',
        subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
@@ -322,9 +360,11 @@ graf_mensual_prop_comuna_tendencia_nutricion
 
 # Gráfico mensual proporción comuna suavizado Psicología
 
+span_optimo_psi <- calcular_span_adaptativo(z_proporcion_cierre_por_solicitud_psicologia_mensual_establecimiento, "centro")
+
 graf_mensual_prop_comuna_tendencia_psicología<- ggplot(z_proporcion_cierre_por_solicitud_psicologia_mensual_establecimiento, 
                                                        aes(x = ymd(date), y=cie_sol , color = centro, group = centro)) +
-  geom_smooth(method = "loess", se = FALSE, span=0.2) +
+  geom_smooth(method = "loess", se = FALSE, span=span_optimo_psi) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes \npor prestador - Psicología',
        subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
@@ -336,9 +376,11 @@ graf_mensual_prop_comuna_tendencia_psicología
 
 # Gráfico mensual proporción comuna suavizado Técnico en enfermería
 
+span_optimo_ten <- calcular_span_adaptativo(z_proporcion_cierre_por_solicitud_tens_mensual_establecimiento, "centro")
+
 graf_mensual_prop_comuna_tendencia_tens<- ggplot(z_proporcion_cierre_por_solicitud_tens_mensual_establecimiento, 
                                                  aes(x = ymd(date), y=cie_sol , color = centro, group = centro)) +
-  geom_smooth(method = "loess", se = FALSE, span=0.2) +
+  geom_smooth(method = "loess", se = FALSE, span=span_optimo_ten) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes \npor prestador - Técnico en enfermería',
        subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
@@ -350,16 +392,18 @@ graf_mensual_prop_comuna_tendencia_tens
 
 # Gráfico mensual proporción comuna suavizado Terapia Ocupacional
 
-graf_mensual_prop_comuna_tendencia_to <- ggplot(z_proporcion_cierre_por_solicitud_to_mensual_establecimiento, 
-                                                aes(x = ymd(date), y = cie_sol, color = centro, group = centro)) +
-  geom_point(size = 2, alpha = 0.7) +
-  geom_line(alpha = 0.6) +  # Líneas simples conectando puntos
+span_optimo_to <- calcular_span_adaptativo(z_proporcion_cierre_por_solicitud_to_mensual_establecimiento, "centro")
+
+graf_mensual_prop_comuna_tendencia_to<- ggplot(z_proporcion_cierre_por_solicitud_to_mensual_establecimiento, 
+                                               aes(x = ymd(date), y=cie_sol , color = centro, group = centro)) +
+  geom_smooth(method = "loess", se = FALSE, span=span_optimo_to) +
   labs(x = "Fecha", y = "Proporción cierre/solicitudes", 
        title = 'Proporción de cierre/solicitudes \npor prestador - Terapia Ocupacional',
-       subtitle = paste0('Plataforma Telesalud. ', comuna_en_uso, '. SSMS. 2025'),
+       subtitle = paste0('Gráfico suavizado. Plataforma Telesalud. ',comuna_en_uso,'. SSMS. 2025'),
        color = 'Centro') +
   custom_theme + 
   scale_colour_tableau("Tableau 20")
+
 
 graf_mensual_prop_comuna_tendencia_to
 
