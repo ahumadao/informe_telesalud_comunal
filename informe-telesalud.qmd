@@ -297,7 +297,7 @@ proporcion_cierre_por_solicitud_ano_prestador_establecimiento %>%
 
 ```
 
-En los siguientes gráficos se observa la evolución de este indicador desde enero de 2023.
+En los siguientes gráficos se observa la evolución de este indicador en los últimos 12 meses.
 
 ```{r, echo=FALSE, include=TRUE, warning=FALSE, message=FALSE}
 graf_mensual_prop_comuna_tendencia_medico
