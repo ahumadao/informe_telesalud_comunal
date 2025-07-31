@@ -261,7 +261,7 @@ kable(tabla_dias_sol_cierre_agenda_establecimiento_prestador, align = 'cccc', ca
 
 ## Proporción de cierres/solicitud
 
-Proporción de cierres por solicitud a es una medida de la cantidad de cantidad de cierres de solicitud por cada solicitud que ingresa a Telesalud. Para que exista un equilibrio entre la entrada y salida, en un establecimiento se deberían estar cerrando la misma cantidad de solicitudes que ingresan, en un determinado tiempo. Esto da como resultado un 1.0 en proporción de cierres por solicitud.
+Proporción de cierres por solicitud es una medida de la cantidad de cantidad de cierres de solicitud por cada solicitud que ingresa a Telesalud. Para que exista un equilibrio entre la entrada y salida, en un establecimiento se deberían estar cerrando la misma cantidad de solicitudes que ingresan, en un determinado tiempo. Esto da como resultado un 1.0 en proporción de cierres por solicitud.
 
 La siguiente tabla resume la proporción de cierres/solicitud en `r comuna_en_uso`, con datos desde `r format(mesesatras_12+1,format='%d-%m-%Y')` hasta `r format(last_day_previous_month,format='%d-%m-%Y')`
 
@@ -283,7 +283,7 @@ graf_mensual_prop_estab
 
 ### Proporción cierres/solicitud por prestador
 
-A continuación se detalla la proporción de cierres/solicitud, desagregado por prestador. En este caso se muestran los prestadores "Médico", "Matrona" y "Dental". La siguiente tabla muestra la proporción por establecimiento de los últimos 12 meses.
+A continuación se detalla la proporción de cierres/solicitud, desagregado por prestador. En este caso se muestran los prestadores "Médicina", "Matrona", "Dental", "Enfermería", "Kinesiología", "Nutrición", "Psicología", "Asistente Social", "Terapia Ocupacional" y "Técnico en enfermería". La siguiente tabla muestra la proporción por establecimiento de los últimos 12 meses.
 
 ```{r, echo=FALSE, include=TRUE, warning=FALSE, message=FALSE}
 proporcion_cierre_por_solicitud_ano_prestador_establecimiento %>%
