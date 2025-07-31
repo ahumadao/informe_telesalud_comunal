@@ -1,0 +1,263 @@
+---
+title: "Informe de gestión remota de la demanda con Telesalud"
+subtitle: 'Servicio de Salud Metropolitano Sur'
+author: 'R. Barrena, J. Cisternas, J. Cortés, F. Viñals, R. Ahumada, G. Prado*'
+date: today
+geometry: "left=2.5cm,right=2.5cm,top=2cm,bottom=2cm"
+format: 
+  pdf:
+    toc: true
+    toc-title: Tabla de Contenido
+    number-sections: true
+    colorlinks: true
+    papersize: letter
+    fontsize: '12pt'
+    include-in-header: 
+      text: |
+        \usepackage{fancyhdr}
+        \pagestyle{fancy}
+        \fancyfoot[C]{\fontsize{8}{12}\selectfont Unidad de Planificación Sanitaria y Estrategias Digitales. DGR. SSMS. 2025}
+---
+
+```{r, echo=FALSE, include=FALSE, warning=FALSE, message=FALSE}
+source('procesamiento_general.R')
+source("calculo_establecimiento2.R")
+source('graficos_telesalud_establecimiento.R')
+```
+
+```{r, echo=TRUE, include=FALSE, warning=FALSE}
+last_sol_date <- format(last_sol_date, format = "%d-%m-%Y")
+
+comma <- function(x, big.mark = ".", decimal.mark = ",", ...) {
+  format(x, big.mark = big.mark, decimal.mark = decimal.mark, ...)
+  }
+
+```
+
+```{r, echo=FALSE, include=FALSE}
+library(knitr)
+library(scales)
+library(kableExtra)
+library(arsenal)
+```
+
+```{r, echo=FALSE, include=FALSE}
+total_piv_2024 <- sum(as.numeric(piv_comuna$piv_2024, na.rm = TRUE))
+total_piv_2024_formato <- comma(total_piv_2024)
+
+piv_comuna$`PIV 2024` <- comma(piv_comuna$piv_2024)
+```
+
+# Introducción
+
+El objetivo de este informe es entregar una mirada global del funcionamiento de la estrategia Telesalud en el `r establecimiento_en_uso` del Servicio de Salud Metropolitano Sur (SSMS).
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Load necessary libraries
+library(lubridate)
+library(dplyr)
+
+# Get today's date
+today <- Sys.Date()
+
+# Get the previous month and year
+previous_month <- floor_date(today, "month") - months(1)
+previous_month_name <- month(previous_month, label = TRUE, abbr = FALSE, locale = "es_ES.UTF-8")
+previous_year <- year(previous_month)
+
+# Combine month and year
+previous_month_year <- paste(tolower(previous_month_name), previous_year)
+```
+
+Esperamos que este informe sea útil para la gestión de los equipos y la estrategia de gestión remota de la demanda del `r establecimiento_en_uso`. En caso de tener dudas o comentarios, les pedimos puedan escribirnos por los canales habituales.
+
+# Estadísticas
+
+En este informe se abordarán las siguientes áreas:
+
+-   Cantidad de solicitudes nuevas.
+
+-   Tiempo de espera.
+
+-   Proporción de egresos vs ingresos.
+
+Todos los datos de este utilizados fueron obtenidos de la plataforma de gestión de Telesalud: <https://gestion.telesalud.gob.cl>
+
+## Solicitudes Totales
+
+Desde 2021 a la fecha de corte de los datos de este informe (`r format(last_day_previous_month, format='%d-%m-%Y')`) , en el SSMS se había recibido por Telesalud un total de `r comma(nrow(data1))` solicitudes. En el `r establecimiento_en_uso`, se había recibido un total de `r comma(nrow(establecimiento1))`. Las solicitudes totales junto con la tasa por cada 1000 personas inscritas validadas en el establecimiento se muestran a continuación.
+
+```{r, echo=FALSE, include=TRUE}
+
+names(total_sol_centro) <- c('Total de solicitudes','PIV 2025', 'N°solicitudes/1000 personas/mes')
+
+
+kable(total_sol_centro, align = 'cccc', caption = 'Cantidad de solicitudes de atención por Tasa de solicitudes por cada 1000 personas, estandarizada por cantidad de meses de implementación de la estrategia. 2025. ',longtable = TRUE)
+```
+
+
+## Proporción de solicitudes pendientes
+
+La proporción de solicitudes pendientes del total de solicitudes pendientes de los últimos 12 meses, es decir, desde el `r format(mesesatras_12+1, format = "%d-%m-%Y")` al `r format(last_day_previous_month, format = "%d-%m-%Y")` , se describe a continuación. El `r establecimiento_en_uso` cuenta con un promedio de proporción de solicitudes pendientes de `r comma(round(proporcion_pendientes_establecimiento$proportion*100, 2), big.mark = '.', decimal.mark = ",")`%. El detalle por establecimiento al `r format(last_day_previous_month, format = "%d-%m-%Y")` se puede observar en la siguiente tabla:
+
+```{r, echo=FALSE, include=TRUE, warning=FALSE, message=FALSE}
+
+proporcion_pendientes_centro_ano <- proporcion_pendientes_centro_ano %>% arrange(desc(`Proporción de solicitudes pendientes`))
+
+kable(proporcion_pendientes_centro_ano, align = 'cccc', caption = paste0('Cantidad y proporción de solicitudes pendientes. Últimos 12 meses. ', establecimiento_en_uso,' .SSMS.'),longtable = TRUE)
+```
+
+*\*Si el establecimiento no cuenta con solcitudes pendientes recibidas hasta el* `r format(last_day_previous_month, format = "%d-%m-%Y")` *, no será visualizado en esta tabla\**
+
+## Tiempo de espera para el cierre
+
+El tiempo de espera para el cierre se considera como el tiempo que transcurre desde la solicitud por el usuario/a mediante Telesalud hasta el cierre de la misma en plataforma. En este caso, se evalúa el tiempo de espera entre el `r format(anno+1,format='%d-%m-%Y')` y el `r format(last_day_previous_month,format='%d-%m-%Y')` .
+
+En el siguiente gráfico, se muestra la  evolución del promedio de tiempo de espera mensual del `r establecimiento_en_uso`:
+
+```{r, echo=FALSE, include=TRUE, warning=FALSE, message=FALSE}
+
+graf_mensual_diasalcierre_establecimiento
+```
+
+### Tiempo de espera por prioridad
+
+Al ser revisadas, los triagistas asignan prioridad a las solicitudes de atención, siendo la prioridad 1 la consulta que necesita mayor premura en su agendamiento y la prioridad 3, aquella que necesita menos premura.
+
+La media de días de espera por prioridad del `r establecimiento_en_uso` durante el año `r year(last_day_previous_month)` es:
+
+```{r, echo=FALSE, include=TRUE, warning=FALSE, message=FALSE}
+
+kable(promedio_espera_prioridad_establecimiento %>% rename(Prioridad = prioridad ), align = 'cc', caption = paste0('Media de días de espera para el cierre, por prioridad. ',year(last_day_previous_month),". " ,establecimiento_en_uso,'. SSMS.'),longtable = TRUE)
+```
+
+En el siguiente gráfico se observa la media del `r establecimiento_en_uso` durante el año `r year(last_day_previous_month)` para las solicitudes, según prioridad.
+
+```{r, echo=FALSE, include=TRUE, warning=FALSE, message=FALSE}
+
+graf_promedio_por_prioridad
+```
+
+### Tiempo de espera por prestador
+
+Según el tipo de prestador solicitado, se observan diferencias en los tiempos de espera. En `r establecimiento_en_uso`, la media de tiempo de espera según prestador en los últimos 12 meses. es la siguiente:
+
+```{r, echo=FALSE, include=TRUE, warning=FALSE, message=FALSE}
+
+kable(promedio_espera_prestador_establecimiento %>% rename(Prestador=tipo_prestador), align = 'cc', caption = paste0('Media de días de espera para el cierre, por tipo de prestador. ',year(last_day_previous_month),". " ,establecimiento_en_uso,'. SSMS.'),longtable = TRUE)
+```
+
+En el siguiente gráfico se observan las medias por establecimiento de tiempo de espera en los últimos 12 meses, según el prestador solicitado.
+
+```{r, echo=FALSE, include=TRUE, warning=FALSE, message=FALSE}
+
+graf_promedio_por_prestador
+```
+
+## Tipos de cierre
+
+Según la resolución que se le entregue al usuario/a, se debe determinar un tipo de cierre para cada solicitud. Las opciones que existen actualmente en la plataforma son:
+
+-   Resuelto por contacto telefónico.
+
+-   Agendado para atención presencial.
+
+-   Agendado para atención por telemedicina.
+
+-   Agendado para orden de examen.
+
+-   Resuelto sin agendar por solicitud repetida.
+
+-   Cierre por no poder ubicar al paciente.
+
+-   Cierre administrativo por no gestión.
+
+-   Solicitud no aplica.
+
+La proporción por comuna de los tipos de cierre durante los últimos 12 meses se observa en el siguiente gráfico:
+
+```{r, echo=FALSE, include=TRUE, warning=FALSE, message=FALSE}
+
+graf_tiposdecierre
+
+```
+
+## Tiempo de espera para solicitud - cierre - agenda (SCA)
+
+El tiempo para el agendamiento corresponde a el tiempo entre la solicitud y la hora de agenda efectiva en la que el usuario/a asistirá a su atención.
+
+Como se mencionó anteriormente, la media de tiempo de espera para el cierre en el `r establecimiento_en_uso`, corresponde a `r promedio_tiempo_espera_establecimiento` días. A continuación se muestran los datos de tiempo de espera del establecimiento, tipo de cierre, prioridad y tipo de prestador. Los tiempos de espera corresponden a las solicitudes cerradas durante los últimos 12 meses, desde el `r format(mesesatras_12+1, format='%d-%m-%Y')` .
+
+En todos los casos solo se incorporan los tipos de cierre que requieren agendamiento (consulta presencial, telemedicina y orden de examen). Debido a que en ocasiones se utiliza la fecha de agenda como la fecha de cierre, se tomaron en consideración solo aquellos casos en que la diferencia en días entre cierre y agendamiento fue distinta de cero, es decir, el cierre y el agendamiento no fue el mismo día.
+
+### Tiempo SCA
+
+```{r, echo=FALSE, include=TRUE, warning=FALSE, message=FALSE}
+
+kable(tabla_dias_sol_cierre_agenda_establecimiento %>% select(-centro), align = 'cccc', caption = paste0('Media de días de espera para el cierre y agendamiento.  ',year(last_day_previous_month),". " ,establecimiento_en_uso,'. SSMS.'),longtable = TRUE)
+```
+
+### Tiempo SCA por tipo de cierre
+
+```{r, echo=FALSE, include=TRUE, warning=FALSE, message=FALSE}
+
+kable(tabla_dias_sol_cierre_agenda_establecimiento_tipo_cierre %>% rename(`Tipo de cierre` = tipo_cierre), align = 'cccc', caption = paste0('Media de días de espera para el cierre y agendamiento, por tipo de cierre. ',year(last_day_previous_month),". " ,establecimiento_en_uso,'. SSMS.'),longtable = TRUE)
+```
+
+### Tiempo SCA por prioridad
+
+```{r, echo=FALSE, include=TRUE, warning=FALSE, message=FALSE}
+
+kable(tabla_dias_sol_cierre_agenda_establecimiento_prioridad, align = 'cccc', caption = paste0('Media de días de espera para el cierre y agendamiento, por prioridad. ',year(last_day_previous_month),". " ,establecimiento_en_uso,'. SSMS.'),longtable = TRUE)
+```
+
+### Tiempo SCA por tipo de prestador
+
+```{r, echo=FALSE, include=TRUE, warning=FALSE, message=FALSE}
+
+kable(tabla_dias_sol_cierre_agenda_establecimiento_prestador, align = 'cccc', caption = paste0('Media de días de espera para el cierre y agendamiento, por prestador. ',year(last_day_previous_month),". " ,establecimiento_en_uso,'. SSMS.'),longtable = TRUE)
+```
+
+## Proporción de cierres/solicitud
+
+Proporción de cierres por solicitud es una medida de la cantidad de cantidad de cierres de solicitud por cada solicitud que ingresa a Telesalud. Para que exista un equilibrio entre la entrada y salida, en un establecimiento se deberían estar cerrando la misma cantidad de solicitudes que ingresan, en un determinado tiempo. Esto da como resultado un 1.0 en proporción de cierres por solicitud.
+
+La siguiente tabla resume la proporción de cierres/solicitud en el `r establecimiento_en_uso`, con datos desde `r format(mesesatras_12+1,format='%d-%m-%Y')` hasta `r format(last_day_previous_month,format='%d-%m-%Y')`
+
+```{r, echo=FALSE, include=TRUE, warning=FALSE, message=FALSE}
+kable(proporcion_cierre_por_solicitud_ano_establecimiento %>%
+        select(
+          `N° solicitudes` = total_solicitudes,
+          `N° cierres` = total_cierres,
+          `Fecha` = month_year_sol,
+          `Proporción` = cie_sol),
+      align = 'cccc', caption = paste0('Proporción de cierres por cada solicitud de atención recibida. ',year(last_day_previous_month),". " ,establecimiento_en_uso,'. SSMS.'))
+```
+
+A continuación se observa un gráfico que describe la proporción de cierres por solicitud del `r establecimiento_en_uso`, durante el mismo periodo.
+
+```{r, echo=FALSE, include=TRUE, warning=FALSE, message=FALSE}
+graf_mensual_prop_estab
+```
+
+### Proporción cierres/solicitud por prestador
+
+A continuación se detalla la proporción de cierres/solicitud, desagregado por prestador. En este caso se muestran los prestadores "Médicina", "Matrona", "Dental", "Enfermería", "Kinesiología", "Nutrición", "Psicología", "Asistente Social", "Terapia Ocupacional" y "Técnico en enfermería". La siguiente tabla muestra la proporción por establecimiento de los últimos 12 meses.
+
+```{r, echo=FALSE, include=TRUE, warning=FALSE, message=FALSE}
+proporcion_cierre_por_solicitud_ano_prestador_establecimiento %>%
+  select(Prestador = tipo_prestador,
+         Solicitudes = total_solicitudes, 
+         Cierres = total_cierres, 
+         Proporcion = cie_sol) %>%
+  filter(Prestador != 'Otros prestadores') %>%
+  kable(align = 'cccc', caption = paste0('Proporción de cierres por cada solicitud de atención recibida, según prestador. ',year(last_day_previous_month),". " ,establecimiento_en_uso,'. SSMS.'))
+
+```
+
+En los siguientes gráficos se observa la evolución de este indicador en los últimos 12 meses.
+
+```{r, echo=FALSE, include=TRUE, warning=FALSE, message=FALSE}
+graf_mensual_prop_promedio_prestadores
+```
