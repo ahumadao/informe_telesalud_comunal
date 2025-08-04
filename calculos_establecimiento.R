@@ -25,7 +25,7 @@ pacman::p_load(
 # 2. Definir comuna ----
 
 
-n <- 1
+n <- 11
 
 
 comuna1 <- data_por_comuna[[n]] %>%
@@ -53,6 +53,7 @@ anno <- last_day_previous_month %m-% months(12)
 mesesadelante_6 <-last_day_previous_month %m+% months(6)
 mesesatras_12 <- last_day_previous_month %m-% months(12)
 comuna_en_uso <- comuna1$comuna[n]
+
 
 comuna1$dias_al_cierre <- as.numeric(difftime(comuna1$fecha_cierre, comuna1$fecha_solicitud, units = "days"))
 comuna1$dias_espera <- as.numeric(difftime(last_day_previous_month, comuna1$fecha_solicitud, , units = "days"))
@@ -304,8 +305,8 @@ total_sol_centro <- comuna1 %>%
   group_by(centro, codigo_centro) %>%
   summarize(`Total de solicitudes` = n(),
             max_date = last_day_previous_month,
-            min_date = mesesatras_12,
-            months_diff = interval(min_date, max_date) %/% months(1)) %>%
+            min_date = min(month_year_sol, na.rm = TRUE),
+            months_diff = interval(min_date, max_date) %/% months(1) + 1) %>%
   ungroup() %>%
   left_join(piv_estab %>% select(codigo_centro,piv_2024),by='codigo_centro') %>%
   mutate(piv_2024 = as.numeric(gsub("\\.", "", piv_2024))) %>%
@@ -692,3 +693,5 @@ z_proporcion_cierre_por_solicitud_to_mensual_establecimiento <- proporcion_cierr
   filter(tipo_prestador == 'Terapia Ocupacional')
 
 proporcion_pendientes_centro_ano <- proporcion_pendientes_centro_ano %>% arrange(desc(`Proporción de solicitudes pendientes`))
+
+
