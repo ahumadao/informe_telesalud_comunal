@@ -1,7 +1,7 @@
 ---
 title: "Informe de gestión remota de la demanda con Telesalud"
 subtitle: 'Servicio de Salud Metropolitano Sur'
-author: 'R. Barrena, J. Cisternas, J. Cortés, F. Viñals, R. Ahumada, G. Prado*'
+author: 'J. Cisternas, J. Cortés, F. Viñals, G. Prado'
 date: today
 geometry: "left=2.5cm,right=2.5cm,top=2cm,bottom=2cm"
 format: 
