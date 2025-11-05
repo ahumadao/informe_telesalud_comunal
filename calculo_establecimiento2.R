@@ -22,10 +22,10 @@ pacman::p_load(
 
 # 1. Importar archivo de procesamiento inicial ----
 
-# 2. Definir comuna ----
+# 2. Definir establecimiento ----
 
 
-n <- 1
+n <- 30
 
 
 establecimiento1 <- data_por_establecimiento[[n]] %>%
@@ -37,10 +37,12 @@ establecimiento1 <- data_por_establecimiento[[n]] %>%
          across(where(is.character), ~ str_replace_all(., regex("calera de tango", ignore_case = TRUE), "Calera De Tango")),
          fecha_solicitud = ymd(fecha_solicitud),
          fecha_cierre = ymd(fecha_cierre), 
-         fecha_agenda = ymd(fecha_agenda)
+         fecha_agenda = ymd(fecha_agenda),
+         fecha_derivacion_1 = ymd(fecha_derivacion_1)
   )
 
 # 3. Definir variables generales ----
+
 
 piv_establecimiento1 <- piv_estab %>%
   filter(centro == establecimiento1$centro[n])
@@ -49,16 +51,22 @@ last_sol_date <- max(as.Date(establecimiento1$fecha_solicitud, format='%d-%m-%Y 
 first_day_this_month <- floor_date(last_sol_date, unit = "month")
 last_day_previous_month <- rollback(first_day_this_month)
 
-anno <- last_day_previous_month %m-% months(12)
+
 mesesadelante_6 <-last_day_previous_month %m+% months(6)
+mesesatras_6 <- last_day_previous_month %m-% months(6)
 mesesatras_12 <- last_day_previous_month %m-% months(12)
+mesesatras_24 <- last_day_previous_month %m-% months(24)
 establecimiento_en_uso <- establecimiento1$centro[n]
 
 establecimiento1$dias_al_cierre <- as.numeric(difftime(establecimiento1$fecha_cierre, establecimiento1$fecha_solicitud, units = "days"))
 establecimiento1$dias_espera <- as.numeric(difftime(last_day_previous_month, establecimiento1$fecha_solicitud, , units = "days"))
+establecimiento1$dias_derivacion <- as.numeric(difftime(establecimiento1$fecha_derivacion_1, establecimiento1$fecha_solicitud, , units = "days"))
+establecimiento1$dias_derivacion_cierre <- as.numeric(difftime(establecimiento1$fecha_cierre, establecimiento1$fecha_derivacion_1, , units = "days"))
 
 start_date <- last_day_previous_month %m-% months(12)
 end_date <- as.Date(first_day_this_month)
+start_date_2years <- last_day_previous_month %m-% months(24)
+end_date_2years <- as.Date(first_day_this_month) %m-% months(24)
 
 # [revisar] 4. Tasa por PIV de solicitudes  mensuales por establecimiento y comuna  ----
 
@@ -75,14 +83,6 @@ tasa_solicitudes_mensual_establecimiento <- establecimiento1 %>%
          date = ymd(date)) %>%
   ungroup()
 
-#### Tasa por PIV mensual para la comuna 
-tasa_solicitudes_mensual_estab <- tasa_solicitudes_mensual_establecimiento %>%
-  filter(date < as.Date(first_day_this_month)) %>%
-  group_by(date,comuna) %>%
-  summarize(total_sol = sum(n_sol)) %>%
-  ungroup()
-
-
 ##### N° cierres  mensuales establecimiento , histórico. 
 
 n_cierres_mensual_establecimiento <- establecimiento1 %>%
@@ -94,19 +94,7 @@ n_cierres_mensual_establecimiento <- establecimiento1 %>%
   ungroup() %>%
   mutate(date = ymd(date))
 
-##### N° cierres  mensuales comuna, histórico.
-
-n_cierres_mensual_estab <- establecimiento1 %>%
-  filter(!is.na(fecha_cierre)) %>% 
-  group_by(month_year_cierre ,centro) %>%
-  summarize(n_cierre = n()) %>%
-  rename(date = month_year_cierre) %>% 
-  filter(date < as.Date(first_day_this_month)) %>%
-  ungroup() %>%
-  mutate(date = ymd(date))
-
-
-##### Proporción de cierres por solicitud, establecimiento, histórico.
+##### Proporción de cierres por tasa de solicitud, establecimiento, histórico.
 proporcion_cierre_por_solicitud_mensual_establecimiento <- tasa_solicitudes_mensual_establecimiento %>%
   left_join(n_cierres_mensual_establecimiento %>% 
               select(codigo_centro, date, n_cierre), 
@@ -115,33 +103,7 @@ proporcion_cierre_por_solicitud_mensual_establecimiento <- tasa_solicitudes_mens
   mutate(proportion = round((n_cierre / n_sol), 2)) %>%
   select(-piv_2024, -sol_per_capita) %>%
   mutate(proportion = ifelse(is.na(proportion), 0, proportion)) %>%
-  filter(date > as.Date('2022-12-31'))
-
-
-# [revisar] 5. solicitudes mensuales por prestador ----
-# 
-# mensual_sol_prestador_comuna <- establecimiento1 %>% 
-#   group_by(month_year_sol, centro, tipo_prestador) %>%
-#   summarize(n_sol = n()) %>%
-#   rename(date = month_year_sol) %>% 
-#   filter(date < as.Date(first_day_this_month))
-# 
-# mensual_cierre_prestador_comuna <- establecimiento1 %>%
-#   filter(!is.na(fecha_cierre)) %>% 
-#   group_by(month_year_cierre, centro,tipo_prestador) %>%
-#   summarize(n_cierre = n()) %>%
-#   rename(date = month_year_cierre) %>% 
-#   filter(date < as.Date(first_day_this_month))
-# 
-# proporcion_cierre_por_solicitud_prestador_mensual_establecimiento <- mensual_sol_prestador_comuna %>%
-#   left_join(mensual_cierre_prestador_comuna, by = c("date", "centro", 'tipo_prestador')) %>%
-#   mutate(proportion = n_cierre / n_sol) %>%
-#   mutate(proportion = ifelse(is.na(proportion), 0, proportion)) %>%
-#   filter(date > as.Date('2022-12-31'))
-# 
-# rm(mensual_cierre_prestador_comuna,mensual_sol_prestador_comuna)
-# 
-
+  filter(date > min(as.Date(establecimiento1$fecha_solicitud, format='%Y-%m-%d' )))
 
 # 6. Tiempo de espera ----
 #función comma
@@ -152,7 +114,7 @@ comma <- function(x, big.mark = ".", decimal.mark = ",", ...) {
 # promedios tiempo de espera último año comuna y estbalecimientos. 
 
 promedio_tiempo_espera_establecimiento <- establecimiento1 %>%
-  filter(estado == 'Cerrada', fecha_solicitud > last_day_previous_month %m-% months(12)) %>%
+  filter(estado == 'Cerrada', fecha_solicitud > mesesatras_12) %>%
   group_by(centro) %>%
   summarise(promedio = round(mean(dias_al_cierre, na.rm = TRUE), 2)) %>%
   arrange(desc(promedio)) %>% 
@@ -167,9 +129,31 @@ promedio_dias_al_cierre_mensual_establecimiento <- establecimiento1 %>%
   summarize(mean_days = round(mean(dias_al_cierre, na.rm = TRUE),2)) %>%
   rename(date = month_year_sol) %>%
   filter(date < as.Date(first_day_this_month), 
-         date > last_day_previous_month %m-% months(12)) %>%
+         date > mesesatras_12) %>%
   mutate(date = ymd(date))
 
+# promedios tiempo de espera penúltimo año comuna y estbalecimientos (comparar comportamientos). 
+
+promedio_tiempo_espera_establecimiento_comp <- establecimiento1 %>%
+  filter(estado == 'Cerrada', 
+         fecha_solicitud  > mesesatras_24,
+         fecha_solicitud < mesesatras_12) %>%
+  group_by(centro) %>%
+  summarise(promedio = round(mean(dias_al_cierre, na.rm = TRUE), 2)) %>%
+  arrange(desc(promedio)) %>% 
+  mutate(promedio = comma(promedio)) %>% 
+  select(c('centro','promedio')) %>%
+  rename(`Promedio días de espera` = promedio,
+         Centro = centro) 
+
+promedio_dias_al_cierre_mensual_establecimiento_comp <- establecimiento1 %>%
+  filter(estado == 'Cerrada') %>%
+  group_by(month_year_sol, centro) %>%
+  summarize(mean_days = round(mean(dias_al_cierre, na.rm = TRUE),2)) %>%
+  rename(date = month_year_sol) %>%
+  filter(date < as.Date(first_day_this_month) %m-% months(12),
+         date > mesesatras_24) %>%
+  mutate(date = ymd(date))
 
 #tiempo de espera por prioridad ----
 
@@ -192,10 +176,20 @@ promedio_dias_al_cierre_prior1_establecimiento <- calculate_mean_days(establecim
 promedio_dias_al_cierre_prior2_establecimiento <- calculate_mean_days(establecimiento1, 2, start_date, end_date)
 promedio_dias_al_cierre_prior3_establecimiento <- calculate_mean_days(establecimiento1, 3, start_date, end_date)
 
+# Calculate mean days for each priority 1 año diferencia
+promedio_dias_al_cierre_prior1_establecimiento_comp <- calculate_mean_days(establecimiento1, 1, start_date_2years, end_date_2years)
+promedio_dias_al_cierre_prior2_establecimiento_comp <- calculate_mean_days(establecimiento1, 2, start_date_2years, end_date_2years)
+promedio_dias_al_cierre_prior3_establecimiento_comp <- calculate_mean_days(establecimiento1, 3, start_date_2years, end_date_2years)
+
 # Combine the mean days data for each priority
 promedio_dias_al_cierre_prioridad_establecimiento <- promedio_dias_al_cierre_prior1_establecimiento %>%
   left_join(promedio_dias_al_cierre_prior2_establecimiento, by = 'centro') %>%
   left_join(promedio_dias_al_cierre_prior3_establecimiento, by = 'centro')
+
+# Combine the mean days data for each priority 1 año diferencia
+promedio_dias_al_cierre_prioridad_establecimiento_comp <- promedio_dias_al_cierre_prior1_establecimiento_comp %>%
+  left_join(promedio_dias_al_cierre_prior2_establecimiento_comp, by = 'centro') %>%
+  left_join(promedio_dias_al_cierre_prior3_establecimiento_comp, by = 'centro')
 
 # Reshape the data to long format
 promedio_dias_al_cierre_prioridad_establecimiento2 <- promedio_dias_al_cierre_prioridad_establecimiento %>%
@@ -205,6 +199,13 @@ promedio_dias_al_cierre_prioridad_establecimiento2 <- promedio_dias_al_cierre_pr
                values_to = "Mean_Days") %>%
   mutate(Priority = as.numeric(Priority))
 
+# Reshape the data to long format 1 año diferencia
+promedio_dias_al_cierre_prioridad_establecimiento2_comp <- promedio_dias_al_cierre_prioridad_establecimiento_comp %>%
+  pivot_longer(cols = starts_with("mean_days_prior"),
+               names_to = "Priority",
+               names_prefix = "mean_days_prior",
+               values_to = "Mean_Days") %>%
+  mutate(Priority = as.numeric(Priority))
 
 #Tiempo de espera por prestador ----
 
@@ -218,6 +219,7 @@ calculate_mean_days_prest <- function(data, prest, start_date, end_date) {
     summarize(mean_days = round(mean(dias_al_cierre, na.rm = TRUE), 2)) %>%
     rename(!!paste0(prest) := mean_days)
 }
+
 
 # Calculate mean days for each priority
 promedio_diasalcierre_med <- calculate_mean_days_prest(establecimiento1, 'Medicina', start_date, end_date)
@@ -233,6 +235,20 @@ promedio_diasalcierre_psi <- calculate_mean_days_prest(establecimiento1, 'Psicol
 promedio_diasalcierre_to <- calculate_mean_days_prest(establecimiento1, 'Terapia Ocupacional', start_date, end_date)
 promedio_diasalcierre_ten <- calculate_mean_days_prest(establecimiento1, 'Técnico en enfermería', start_date, end_date)
 
+# Calculate mean days for each priority 1 año diferencia
+promedio_diasalcierre_med_comp <- calculate_mean_days_prest(establecimiento1, 'Medicina', start_date_2years, end_date_2years)
+promedio_diasalcierre_mat_comp <- calculate_mean_days_prest(establecimiento1, 'Matrona', start_date_2years, end_date_2years)
+promedio_diasalcierre_dent_comp <- calculate_mean_days_prest(establecimiento1, 'Dental', start_date_2years, end_date_2years)
+
+#Calculate mean days for each priority Otros prestadores 1 año diferencia
+promedio_diasalcierre_aso_comp <- calculate_mean_days_prest(establecimiento1, 'Asistente Social', start_date_2years, end_date_2years)
+promedio_diasalcierre_kin_comp <- calculate_mean_days_prest(establecimiento1, 'Kinesiología', start_date_2years, end_date_2years)
+promedio_diasalcierre_enf_comp <- calculate_mean_days_prest(establecimiento1, 'Enfermería', start_date_2years, end_date_2years)
+promedio_diasalcierre_nut_comp <- calculate_mean_days_prest(establecimiento1, 'Nutrición', start_date_2years, end_date_2years)
+promedio_diasalcierre_psi_comp <- calculate_mean_days_prest(establecimiento1, 'Psicología', start_date_2years, end_date_2years)
+promedio_diasalcierre_to_comp <- calculate_mean_days_prest(establecimiento1, 'Terapia Ocupacional', start_date_2years, end_date_2years)
+promedio_diasalcierre_ten_comp <- calculate_mean_days_prest(establecimiento1, 'Técnico en enfermería', start_date_2years, end_date_2years)
+
 
 # Combine the mean days data for each priority
 promedio_diasalcierre_todoprest <- promedio_diasalcierre_med %>%
@@ -245,6 +261,16 @@ promedio_diasalcierre_todoprest <- promedio_diasalcierre_med %>%
   left_join(promedio_diasalcierre_to, by = 'centro') %>%
   left_join(promedio_diasalcierre_ten, by = 'centro')
 
+# Combine the mean days data for each priority 1 año diferencia
+promedio_diasalcierre_todoprest_comp <- promedio_diasalcierre_med_comp %>%
+  left_join(promedio_diasalcierre_mat_comp, by = 'centro') %>%
+  left_join(promedio_diasalcierre_dent_comp, by = 'centro') %>%
+  left_join(promedio_diasalcierre_kin_comp, by = 'centro') %>%
+  left_join(promedio_diasalcierre_enf_comp, by = 'centro') %>% 
+  left_join(promedio_diasalcierre_nut_comp, by = 'centro') %>%
+  left_join(promedio_diasalcierre_psi_comp, by = 'centro') %>%
+  left_join(promedio_diasalcierre_to_comp, by = 'centro') %>%
+  left_join(promedio_diasalcierre_ten_comp, by = 'centro')
 
 # Reshape the data to long format
 
@@ -270,6 +296,32 @@ promedio_espera_prioridad_establecimiento <- establecimiento1 %>%
   summarise(`Días de espera` = comma(round(mean(dias_al_cierre, na.rm = TRUE), 2)))
 
 
+
+# Reshape the data to long format 1 año diferencia
+
+promedio_diasalcierre_todoprest_long_comp <- promedio_diasalcierre_todoprest_comp %>%
+  pivot_longer(cols = any_of(c('Medicina','Matrona', 'Dental', 'Asistente Social', 'Kinesiología', 'Enfermería', 'Nutrición', 'Psicología', 'Terapia Ocupacional','Técnico en enfermería')),
+               names_to = "Prestador",
+               values_to = "Mean_Days")
+
+
+promedio_espera_prestador_establecimiento_comp <- establecimiento1 %>%
+  filter(estado == 'Cerrada', 
+         fecha_cierre > as.Date(start_date_2years),
+         fecha_cierre < end_date_2years) %>%
+  group_by(tipo_prestador) %>%
+  summarise(`Días de espera`= comma(round(mean(dias_al_cierre, na.rm = TRUE), 2)))
+
+promedio_espera_prioridad_establecimiento_comp <- establecimiento1 %>%
+  filter(estado == 'Cerrada',
+         prioridad != 4,
+         fecha_cierre < end_date_2years, 
+         fecha_cierre > start_date_2years) %>%
+  group_by(prioridad) %>%
+  summarise(`Días de espera` = comma(round(mean(dias_al_cierre, na.rm = TRUE), 2)))
+
+
+
 #7.  Total de solicitudes por centro ----
 
 total_sol_centro <- establecimiento1 %>%
@@ -289,15 +341,33 @@ total_sol_centro <- establecimiento1 %>%
     sol_1000_month = comma(sol_1000_month)
   )
 
+total_sol_centro_comp <- establecimiento1 %>%
+  group_by(centro, codigo_centro) %>%
+  summarize(`Total de solicitudes` = n(),
+            max_date = mesesatras_12,
+            min_date = mesesatras_24,
+            months_diff = interval(min_date, max_date) %/% months(1)) %>%
+  ungroup() %>%
+  left_join(piv_estab %>% select(codigo_centro,piv_2024),by='codigo_centro') %>%
+  mutate(piv_2024 = as.numeric(gsub("\\.", "", piv_2024))) %>%
+  mutate(sol_1000_month = round(`Total de solicitudes`/piv_2024/months_diff *1000,2)) %>% 
+  select(centro,`Total de solicitudes`, piv_2024, sol_1000_month) %>%
+  mutate(
+    `Total de solicitudes` = comma(`Total de solicitudes`),
+    piv_2024 = comma(piv_2024),
+    sol_1000_month = comma(sol_1000_month)
+  )
+
 
 total_sol_centro <- total_sol_centro %>% arrange(desc(sol_1000_month)) %>% select(-centro)
+total_sol_centro_comp <- total_sol_centro_comp %>% arrange(desc(sol_1000_month)) %>% select(-centro)
 
 
 total_sol_centro_bruto <- establecimiento1 %>%
   group_by(centro, codigo_centro) %>%
   summarize(`Total de solicitudes` = n(),
             max_date = last_day_previous_month,
-            min_date = anno,
+            min_date = mesesatras_12,
             months_diff = interval(min_date, max_date) %/% months(1)) %>%
   ungroup() %>%
   left_join(piv_estab %>% select(codigo_centro,piv_2024),by='codigo_centro') %>%
@@ -305,12 +375,25 @@ total_sol_centro_bruto <- establecimiento1 %>%
   mutate(sol_1000_month = round(`Total de solicitudes`/piv_2024/months_diff *1000,2)) %>% 
   select(centro,`Total de solicitudes`, piv_2024, sol_1000_month) 
 
+total_sol_centro_bruto_comp <- establecimiento1 %>%
+  group_by(centro, codigo_centro) %>%
+  summarize(`Total de solicitudes` = n(),
+            max_date = mesesatras_12,
+            min_date = mesesatras_24,
+            months_diff = interval(min_date, max_date) %/% months(1)) %>%
+  ungroup() %>%
+  left_join(piv_estab %>% select(codigo_centro,piv_2024),by='codigo_centro') %>%
+  mutate(piv_2024 = as.numeric(gsub("\\.", "", piv_2024))) %>%
+  mutate(sol_1000_month = round(`Total de solicitudes`/piv_2024/months_diff *1000,2)) %>% 
+  select(centro,`Total de solicitudes`, piv_2024, sol_1000_month) 
+
+
 # 8. Proporción de solicitudes por estado ----
 ##Pendientes##
 
 proporcion_pendientes_centro_ano <- establecimiento1 %>%
   filter(estado == 'Pendiente',
-         fecha_solicitud > anno) %>% 
+         fecha_solicitud > mesesatras_12) %>% 
   group_by(centro, estado) %>%
   summarize(n_sol = n(), .groups = 'drop') %>%  # .groups = 'drop' desagrupa automáticamente
   left_join(total_sol_centro_bruto, by = 'centro') %>%
@@ -326,6 +409,27 @@ proporcion_pendientes_centro_ano <- establecimiento1 %>%
     `Total de solicitudes` = comma(`Total de solicitudes`),
     `Proporción de solicitudes pendientes` = comma(`Proporción de solicitudes pendientes`)
   )
+
+proporcion_pendientes_centro_ano_comp <- establecimiento1 %>%
+  filter(estado == 'Pendiente',
+         fecha_solicitud < mesesatras_12,
+         fecha_solicitud > mesesatras_24) %>% 
+  group_by(centro, estado) %>%
+  summarize(n_sol = n(), .groups = 'drop') %>%  # .groups = 'drop' desagrupa automáticamente
+  left_join(total_sol_centro_bruto, by = 'centro') %>%
+  mutate(prop_sol = round(n_sol/`Total de solicitudes`*100, 2)) %>%
+  ungroup() %>%  # Asegurar que no hay agrupación
+  select(`Total de solicitudes`, n_sol, prop_sol) %>%  # Solo las columnas que quieres
+  rename(
+    `Solicitudes pendientes` = n_sol,
+    `Total de solicitudes` = `Total de solicitudes`,
+    `Proporción de solicitudes pendientes` = prop_sol) %>%
+  mutate(
+    `Solicitudes pendientes` = comma(`Solicitudes pendientes`),
+    `Total de solicitudes` = comma(`Total de solicitudes`),
+    `Proporción de solicitudes pendientes` = comma(`Proporción de solicitudes pendientes`)
+  )
+
 
 
 
@@ -351,11 +455,11 @@ proporcion_pendientes_establecimiento <- establecimiento1 %>%
 # [USO] Tipos de cierre ultimo año ####### ----
 
 tipos_de_cierre <- establecimiento1 %>%
-  filter((fecha_cierre > anno), !is.na(fecha_cierre), fecha_cierre < first_day_this_month) %>%
+  filter((fecha_cierre > mesesatras_12), !is.na(fecha_cierre), fecha_cierre < first_day_this_month) %>%
   group_by(centro, tipo_cierre) %>%
   summarize(cierres = n()) %>%
   left_join(n_cierres_mensual_establecimiento %>%
-              filter(date > anno,
+              filter(date > mesesatras_12,
                      date < first_day_this_month) %>%
               group_by(centro) %>% 
               summarise(total_cierres = sum(n_cierre)), 
@@ -369,6 +473,29 @@ top_values <- tipos_de_cierre %>%
   ungroup()
 
 tipos_de_cierre <- tipos_de_cierre %>%
+  left_join(top_values %>% select(centro, tipo_cierre, prop_tipo_cierre) %>% mutate(top = TRUE), 
+            by = c("centro", "tipo_cierre", "prop_tipo_cierre")) %>%
+  mutate(top = ifelse(is.na(top), FALSE, top))
+
+tipos_de_cierre_comp <- establecimiento1 %>%
+  filter((fecha_cierre > mesesatras_24), !is.na(fecha_cierre), fecha_cierre < first_day_this_month) %>%
+  group_by(centro, tipo_cierre) %>%
+  summarize(cierres = n()) %>%
+  left_join(n_cierres_mensual_establecimiento %>%
+              filter(date > mesesatras_12,
+                     date < end_date_2years) %>%
+              group_by(centro) %>% 
+              summarise(total_cierres = sum(n_cierre)), 
+            by='centro') %>% 
+  mutate(prop_tipo_cierre = round(cierres/total_cierres*100 , 2))
+
+top_values_comp <- tipos_de_cierre_comp %>%
+  group_by(centro) %>%
+  arrange(centro, desc(prop_tipo_cierre)) %>%
+  slice_head(n = 3) %>%
+  ungroup()
+
+tipos_de_cierre_comp <- tipos_de_cierre_comp %>%
   left_join(top_values %>% select(centro, tipo_cierre, prop_tipo_cierre) %>% mutate(top = TRUE), 
             by = c("centro", "tipo_cierre", "prop_tipo_cierre")) %>%
   mutate(top = ifelse(is.na(top), FALSE, top))
@@ -405,6 +532,30 @@ tabla_dias_sol_cierre_agenda_establecimiento <- establecimiento1 %>%
          `Media cierre. al agend.` = 'media_dias_cierre_agenda',
   )
 
+tabla_dias_sol_cierre_agenda_establecimiento_comp <- establecimiento1 %>% 
+  filter(
+    estado == 'Cerrada',
+    fecha_cierre > mesesatras_24,
+    fecha_agenda < mesesatras_6,
+    fecha_agenda > mesesatras_24,
+    dias_cierre_agenda != 0,
+    prioridad != 4,
+    tipo_cierre %in% c('Agendado para atención presencial', 
+                       'Agendado para atención por telemedicina', 
+                       'Agendado para orden de examen'), 
+  )%>%
+  group_by(`centro`) %>%
+  summarise(
+    media_dias_sol_cierre = comma(round(mean(dias_al_cierre, na.rm = TRUE),2)),
+    media_dias_sol_agenda = comma(round(mean(dias_sol_agenda, na.rm = TRUE),2)),
+    media_dias_cierre_agenda = comma(round(mean(dias_cierre_agenda, na.rm = TRUE),2))
+  ) %>% 
+  rename(`Media sol. al cierre` = 'media_dias_sol_cierre',
+         `Media sol. al agend.` = 'media_dias_sol_agenda',
+         `Media cierre. al agend.` = 'media_dias_cierre_agenda',
+  )
+
+
 
 # [USO] SCA por tipo de cierre ----
 
@@ -414,6 +565,29 @@ tabla_dias_sol_cierre_agenda_establecimiento_tipo_cierre <- establecimiento1 %>%
     fecha_cierre > mesesatras_12,
     fecha_agenda < mesesadelante_6,
     fecha_agenda > mesesatras_12,
+    dias_cierre_agenda != 0,
+    prioridad != 4,
+    tipo_cierre %in% c('Agendado para atención presencial', 
+                       'Agendado para atención por telemedicina', 
+                       'Agendado para orden de examen'), 
+  )%>%
+  group_by(tipo_cierre) %>%
+  summarise(
+    media_dias_sol_cierre = comma(round(mean(dias_al_cierre, na.rm = TRUE),2)),
+    media_dias_sol_agenda = comma(round(mean(dias_sol_agenda, na.rm = TRUE),2)),
+    media_dias_cierre_agenda = comma(round(mean(dias_cierre_agenda, na.rm = TRUE),2))
+  ) %>% 
+  rename(`Media sol. al cierre` = 'media_dias_sol_cierre',
+         `Media sol. al agend.` = 'media_dias_sol_agenda',
+         `Media cierre. al agend.` = 'media_dias_cierre_agenda',
+  )
+
+tabla_dias_sol_cierre_agenda_establecimiento_tipo_cierre_comp <- establecimiento1 %>% 
+  filter(
+    estado == 'Cerrada',
+    fecha_cierre > mesesatras_24,
+    fecha_agenda < mesesatras_6,
+    fecha_agenda > mesesatras_24,
     dias_cierre_agenda != 0,
     prioridad != 4,
     tipo_cierre %in% c('Agendado para atención presencial', 
@@ -458,6 +632,29 @@ tabla_dias_sol_cierre_agenda_establecimiento_prioridad <- establecimiento1 %>%
          Prioridad = prioridad
   )
 
+tabla_dias_sol_cierre_agenda_establecimiento_prioridad_comp <- establecimiento1 %>% 
+  filter(
+    estado == 'Cerrada',
+    fecha_cierre > mesesatras_24,
+    fecha_agenda < mesesatras_12,
+    fecha_agenda > mesesatras_24,
+    dias_cierre_agenda != 0,
+    prioridad != 4,
+    tipo_cierre %in% c('Agendado para atención presencial', 
+                       'Agendado para atención por telemedicina', 
+                       'Agendado para orden de examen'), 
+  )%>%
+  group_by(prioridad) %>%
+  summarise(
+    media_dias_sol_cierre = comma(round(mean(dias_al_cierre, na.rm = TRUE),2)),
+    media_dias_sol_agenda = comma(round(mean(dias_sol_agenda, na.rm = TRUE),2)),
+    media_dias_cierre_agenda = comma(round(mean(dias_cierre_agenda, na.rm = TRUE),2))
+  ) %>% 
+  rename(`Media sol. al cierre` = 'media_dias_sol_cierre',
+         `Media sol. al agend.` = 'media_dias_sol_agenda',
+         `Media cierre. al agend.` = 'media_dias_cierre_agenda',
+         Prioridad = prioridad
+  )
 # [USO] SCA por prestador ----
 
 tabla_dias_sol_cierre_agenda_establecimiento_prestador <- establecimiento1 %>% 
@@ -466,6 +663,30 @@ tabla_dias_sol_cierre_agenda_establecimiento_prestador <- establecimiento1 %>%
     fecha_cierre > mesesatras_12,
     fecha_agenda < mesesadelante_6,
     fecha_agenda > mesesatras_12,
+    dias_cierre_agenda != 0,
+    prioridad != 4,
+    tipo_cierre %in% c('Agendado para atención presencial', 
+                       'Agendado para atención por telemedicina', 
+                       'Agendado para orden de examen'), 
+  )%>%
+  group_by(tipo_prestador) %>%
+  summarise(
+    media_dias_sol_cierre = comma(round(mean(dias_al_cierre, na.rm = TRUE),2)),
+    media_dias_sol_agenda = comma(round(mean(dias_sol_agenda, na.rm = TRUE),2)),
+    media_dias_cierre_agenda = comma(round(mean(dias_cierre_agenda, na.rm = TRUE),2))
+  ) %>% 
+  rename(`Media sol. al cierre` = 'media_dias_sol_cierre',
+         `Media sol. al agend.` = 'media_dias_sol_agenda',
+         `Media cierre. al agend.` = 'media_dias_cierre_agenda',
+         `Prestador` = tipo_prestador
+  )
+
+tabla_dias_sol_cierre_agenda_establecimiento_prestador_comp <- establecimiento1 %>% 
+  filter(
+    estado == 'Cerrada',
+    fecha_cierre > mesesatras_24,
+    fecha_agenda < mesesatras_6,
+    fecha_agenda > mesesatras_24,
     dias_cierre_agenda != 0,
     prioridad != 4,
     tipo_cierre %in% c('Agendado para atención presencial', 
@@ -516,6 +737,34 @@ proporcion_cierre_por_solicitud_ano_establecimiento<- n_solicitudes_ano_establec
 
 rm(n_solicitudes_ano_establecimiento,n_cierres_ano_establecimiento )
 
+n_solicitudes_ano_establecimiento_comp <- establecimiento1 %>%
+  filter(
+    fecha_solicitud > mesesatras_24,
+    fecha_solicitud < end_date_2years
+  ) %>%
+  group_by(month_year_sol,centro) %>%
+  summarize(total = n()) %>%
+  ungroup()
+
+n_cierres_ano_establecimiento_comp <- establecimiento1 %>%
+  filter(
+    fecha_cierre > mesesatras_24,
+    fecha_cierre < end_date_2years,
+    fecha_solicitud < end_date_2years,
+    !is.na(fecha_cierre)
+  ) %>%
+  group_by(month_year_cierre, centro) %>%
+  summarize(total = n()) %>%
+  ungroup()
+
+proporcion_cierre_por_solicitud_ano_establecimiento_comp <- n_solicitudes_ano_establecimiento_comp %>%
+  left_join(n_cierres_ano_establecimiento_comp, by= c('centro', 'month_year_sol'='month_year_cierre')) %>%
+  rename(total_solicitudes = 'total.x',
+         total_cierres = 'total.y') %>%
+  mutate(cie_sol = round(total_cierres/total_solicitudes,2))
+
+rm(n_solicitudes_ano_establecimiento_comp ,n_cierres_ano_establecimiento_comp )
+
 
 #[USO] Proporcion de cierres/solicitud por prestador y establecimiento ultimo año ----
 
@@ -540,6 +789,32 @@ n_cierres_ano_prestador_establecimiento <- establecimiento1 %>%
   ungroup()
 
 proporcion_cierre_por_solicitud_ano_prestador_establecimiento<- n_solicitudes_ano_prestador_establecimiento %>%
+  left_join(n_cierres_ano_prestador_establecimiento, by= c('centro','tipo_prestador')) %>%
+  rename(total_solicitudes = 'total.x',
+         total_cierres = 'total.y') %>%
+  mutate(cie_sol = round(total_cierres/total_solicitudes,2))
+
+n_solicitudes_ano_prestador_establecimiento_comp <- establecimiento1 %>%
+  filter(
+    fecha_solicitud > mesesatras_24,
+    fecha_solicitud < end_date_2years
+  ) %>%
+  group_by(centro,tipo_prestador) %>%
+  summarize(total = n()) %>%
+  ungroup()
+
+n_cierres_ano_prestador_establecimiento_comp <- establecimiento1 %>%
+  filter(
+    fecha_cierre > mesesatras_24,
+    fecha_cierre < end_date_2years,
+    fecha_solicitud < end_date_2years,
+    !is.na(fecha_cierre)
+  ) %>%
+  group_by(centro,tipo_prestador) %>%
+  summarize(total = n()) %>%
+  ungroup()
+
+proporcion_cierre_por_solicitud_ano_prestador_establecimiento_comp <- n_solicitudes_ano_prestador_establecimiento_comp %>%
   left_join(n_cierres_ano_prestador_establecimiento, by= c('centro','tipo_prestador')) %>%
   rename(total_solicitudes = 'total.x',
          total_cierres = 'total.y') %>%
@@ -632,3 +907,96 @@ z_proporcion_cierre_por_solicitud_to_mensual_establecimiento <- proporcion_cierr
   filter(tipo_prestador == 'Terapia Ocupacional')
 
 proporcion_pendientes_centro_ano <- proporcion_pendientes_centro_ano %>% arrange(desc(`Proporción de solicitudes pendientes`))
+
+#[USO] Proporcion de cierres/solicitud mensual por prestador y establecimiento PENÚLTIMO año ----
+
+n_solicitudes_mensual_prestador_establecimiento_comp <- establecimiento1 %>%
+  filter(
+    fecha_solicitud > mesesatras_24,
+    fecha_solicitud < end_date_2years
+  ) %>%
+  group_by(month_year_sol, centro,tipo_prestador) %>%
+  summarize(total = n()) %>%
+  ungroup()
+
+n_cierres_mensual_prestador_establecimiento_comp <- establecimiento1 %>%
+  filter(
+    fecha_cierre > mesesatras_24,
+    fecha_cierre < end_date_2years,
+    fecha_solicitud < end_date_2years,
+    !is.na(fecha_cierre)
+  ) %>%
+  group_by(month_year_cierre, centro,tipo_prestador) %>%
+  summarize(total = n()) %>%
+  ungroup()
+
+proporcion_cierre_por_solicitud_mensual_prestador_establecimiento_comp <- n_solicitudes_mensual_prestador_establecimiento_comp %>%
+  left_join(n_cierres_mensual_prestador_establecimiento, by= c('month_year_sol'='month_year_cierre','centro','tipo_prestador')) %>%
+  rename(total_solicitudes = 'total.x',
+         total_cierres = 'total.y') %>%
+  mutate(cie_sol = round(total_cierres/total_solicitudes,2)) %>%
+  rename(date = month_year_sol)
+
+
+
+z_proporcion_cierre_por_solicitud_medico_mensual_establecimiento_comp <- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento_comp %>%
+  mutate(cie_sol = ifelse(is.na(cie_sol), 0, cie_sol)) %>%
+  filter(date > mesesatras_24,
+         date < mesesatras_12) %>% 
+  filter(tipo_prestador == 'Medicina')
+
+z_proporcion_cierre_por_solicitud_dental_mensual_establecimiento_comp <- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento_comp %>%
+  mutate(cie_sol = ifelse(is.na(cie_sol), 0, cie_sol)) %>%
+  filter(date > mesesatras_24,
+         date < mesesatras_12) %>% 
+  filter(tipo_prestador == 'Dental')
+
+z_proporcion_cierre_por_solicitud_matrona_mensual_establecimiento_comp <- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento_comp %>%
+  mutate(cie_sol = ifelse(is.na(cie_sol), 0, cie_sol)) %>%
+  filter(date > mesesatras_24,
+         date < mesesatras_12) %>% 
+  filter(tipo_prestador == 'Matrona')
+
+z_proporcion_cierre_por_solicitud_asistente_social_mensual_establecimiento_comp <- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento_comp %>%
+  mutate(cie_sol = ifelse(is.na(cie_sol), 0, cie_sol)) %>%
+  filter(date > mesesatras_24,
+         date < mesesatras_12) %>% 
+  filter(tipo_prestador == 'Asistente Social')
+
+z_proporcion_cierre_por_solicitud_enfermeria_mensual_establecimiento_comp <- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento_comp %>%
+  mutate(cie_sol = ifelse(is.na(cie_sol), 0, cie_sol)) %>%
+  filter(date > mesesatras_24,
+         date < mesesatras_12) %>% 
+  filter(tipo_prestador == 'Enfermería')
+
+z_proporcion_cierre_por_solicitud_kinesiologia_mensual_establecimiento_comp<- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento_comp %>%
+  mutate(cie_sol = ifelse(is.na(cie_sol), 0, cie_sol)) %>%
+  filter(date > mesesatras_24,
+         date < mesesatras_12) %>% 
+  filter(tipo_prestador == 'Kinesiología')
+
+z_proporcion_cierre_por_solicitud_nutricion_mensual_establecimiento_comp <- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento_comp %>%
+  mutate(cie_sol = ifelse(is.na(cie_sol), 0, cie_sol)) %>%
+  filter(date > mesesatras_24,
+         date < mesesatras_12) %>% 
+  filter(tipo_prestador == 'Nutrición')
+
+z_proporcion_cierre_por_solicitud_psicologia_mensual_establecimiento_comp <- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento_comp %>%
+  mutate(cie_sol = ifelse(is.na(cie_sol), 0, cie_sol)) %>%
+  filter(date > mesesatras_24,
+         date < mesesatras_12) %>% 
+  filter(tipo_prestador == 'Psicología')
+
+z_proporcion_cierre_por_solicitud_tens_mensual_establecimiento_comp <- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento_comp %>%
+  mutate(cie_sol = ifelse(is.na(cie_sol), 0, cie_sol)) %>%
+  filter(date > mesesatras_24,
+         date < mesesatras_12) %>% 
+  filter(tipo_prestador == 'Técnico en enfermería')
+
+z_proporcion_cierre_por_solicitud_to_mensual_establecimiento_comp <- proporcion_cierre_por_solicitud_mensual_prestador_establecimiento_comp %>%
+  mutate(cie_sol = ifelse(is.na(cie_sol), 0, cie_sol)) %>%
+  filter(date > mesesatras_24,
+         date < mesesatras_12) %>% 
+  filter(tipo_prestador == 'Terapia Ocupacional')
+
+proporcion_pendientes_centro_ano_comp <- proporcion_pendientes_centro_ano_comp %>% arrange(desc(`Proporción de solicitudes pendientes`))
