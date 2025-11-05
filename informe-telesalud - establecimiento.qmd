@@ -230,9 +230,18 @@ kable(proporcion_cierre_por_solicitud_ano_establecimiento %>%
         select(
           `N° solicitudes` = total_solicitudes,
           `N° cierres` = total_cierres,
-          `Fecha` = month_year_sol,
           `Proporción` = cie_sol),
-      align = 'cccc', caption = paste0('Proporción de cierres por cada solicitud de atención recibida. ',year(last_day_previous_month),". " ,establecimiento_en_uso,'. SSMS.'))
+      align = 'cccc', caption = paste0('Proporción de cierres por cada solicitud de atención recibida. ',year(last_day_previous_month),". " ,establecimiento_en_uso,'. SSMS.')) %>%
+    kable_styling(
+    full_width = FALSE,        # CLAVE: No ocupe todo el ancho
+    position = "center",       # CLAVE: Centrar la tabla
+    bootstrap_options = "none" # CLAVE: Sin estilos de Bootstrap que cambien alineación
+  ) %>%
+  footnote(
+    general = "(*) Cierres realizados en el período analizado.",
+    general_title = "",
+    footnote_as_chunk = TRUE
+  )
 ```
 
 A continuación se observa un gráfico que describe la proporción de cierres por solicitud del `r establecimiento_en_uso`, durante el mismo periodo.
