@@ -98,8 +98,8 @@ servicios_salud_validos <- c(
 
 # 4. Filtrar base
 usuarios <- usuarios %>%
-  filter(!RUN %in% runs_a_eliminar) %>%
-  filter(`Servicio Salud` %in% servicios_salud_validos)
+  filter(!run %in% runs_a_eliminar) %>%
+  filter(servicio_salud %in% servicios_salud_validos)
 
 ####################### Manejo de la base de telesalud #####################
 
