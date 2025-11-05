@@ -25,7 +25,7 @@ pacman::p_load(
 # 2. Definir comuna ----
 
 
-n <- 11
+n <- 2
 
 
 comuna1 <- data_por_comuna[[n]] %>%
@@ -304,9 +304,9 @@ promedio_espera_prioridad_comuna <- comuna1 %>%
 total_sol_centro <- comuna1 %>%
   group_by(centro, codigo_centro) %>%
   summarize(`Total de solicitudes` = n(),
-            max_date = last_day_previous_month,
-            min_date = min(month_year_sol, na.rm = TRUE),
-            months_diff = interval(min_date, max_date) %/% months(1) + 1) %>%
+            max_date = max(fecha_solicitud, na.rm = TRUE),  # 👈 Última fecha de solicitud
+            min_date = min(fecha_solicitud, na.rm = TRUE),  # 👈 Primera fecha de solicitud
+            months_diff = interval(min_date, max_date) %/% months(1) + 1) %>% # 👈 Se añade +1 para incluir el mes inicial %>%
   ungroup() %>%
   left_join(piv_estab %>% select(codigo_centro,piv_2024),by='codigo_centro') %>%
   mutate(piv_2024 = as.numeric(gsub("\\.", "", piv_2024))) %>%
@@ -319,20 +319,23 @@ total_sol_centro <- comuna1 %>%
   )
 
 
-total_sol_centro <- total_sol_centro %>% arrange(desc(sol_1000_month))
+total_sol_centro <- total_sol_centro %>% arrange(centro) #para ordenar la información por orden alfabético según el nombre del centro (CESFAM/CECOSF)
 
 
 total_sol_centro_bruto <- comuna1 %>%
+  filter(fecha_solicitud >= anno & fecha_solicitud <= last_day_previous_month) %>% 
   group_by(centro, codigo_centro) %>%
-  summarize(`Total de solicitudes` = n(),
+  summarize(`Solicitudes ultimos 12 meses` = n(),
             max_date = last_day_previous_month,
             min_date = anno,
             months_diff = interval(min_date, max_date) %/% months(1)) %>%
   ungroup() %>%
   left_join(piv_estab %>% select(codigo_centro,piv_2024),by='codigo_centro') %>%
   mutate(piv_2024 = as.numeric(gsub("\\.", "", piv_2024))) %>%
-  mutate(sol_1000_month = round(`Total de solicitudes`/piv_2024/months_diff *1000,2)) %>% 
-  select(centro,`Total de solicitudes`, piv_2024, sol_1000_month) 
+  mutate(sol_1000_month = round(`Solicitudes ultimos 12 meses`/piv_2024/months_diff *1000,2)) %>% 
+  select(centro,`Solicitudes ultimos 12 meses`, piv_2024, sol_1000_month) 
+
+total_sol_centro_bruto <- total_sol_centro_bruto %>% arrange(centro) #para ordenar la información por orden alfabético según el nombre del centro (CESFAM/CECOSF)
 
 # 8. Proporción de solicitudes por estado ----
 ##Pendientes##
@@ -344,12 +347,12 @@ proporcion_pendientes_centro_ano <- comuna1 %>%
   summarize(n_sol = n()) %>%
   left_join(total_sol_centro_bruto, by = 'centro') %>%
   mutate(
-    prop_sol = round(n_sol/`Total de solicitudes`*100, 2)) %>%
-  select('centro','n_sol','Total de solicitudes', 'prop_sol') %>%
+    prop_sol = round(n_sol/`Solicitudes ultimos 12 meses`*100, 2)) %>%
+  select('centro','n_sol','Solicitudes ultimos 12 meses', 'prop_sol') %>%
   rename(
     Centro = centro,
     `Solicitudes pendientes` = n_sol,
-    `Total de solicitudes` = `Total de solicitudes`,
+    `Total de solicitudes` = `Solicitudes ultimos 12 meses`,
     `Proporción de solicitudes pendientes` = prop_sol) %>%
   mutate(
     `Solicitudes pendientes` = comma(`Solicitudes pendientes`),
