@@ -16,14 +16,27 @@ pacman::p_load(
 
 ####################### Importo los datos ########################################
 
+usuarios <- import('data/Usuarios.xlsx') %>%  clean_names()
 data <- import('data/base_julio_2025.csv') %>% clean_names()
-piv <- import('data/piv2025.xlsx') %>% clean_names()
+piv2024 <- import('data/piv2024.xlsx') %>% clean_names()
+piv2025 <- import('data/piv2025.xlsx') %>% clean_names()
 deis <- import('data/deis_ssms.xlsx') %>% clean_names() %>% rename(centro = nombre_oficial,comuna = nombre_comuna, codigo_centro = codigo_vigente)
 
 export(head(data),'data_enero_head.csv')
 
-####################### Manejo de la base de PIV 2024 ##################################
-piv_comuna <- piv %>%
+####################### Manejo de la base de PIV 2024 y 2025 ##################################
+piv_comuna_2025 <- piv2025 %>%
+  group_by(comuna) %>%
+  summarize(piv_2025 = sum(inscritos)) %>%
+  ungroup() %>%
+  mutate(across(where(is.character), ~ str_replace_all(., regex("Centro de Salud Familiar", ignore_case = TRUE), "CESFAM")),
+         across(where(is.character), ~ str_replace_all(., regex("Centro Comunitario de Salud Familiar", ignore_case = TRUE), "CECOSF")),
+         across(where(is.character), ~ str_replace_all(., regex("Centro Comunitario de Salud Familiar", ignore_case = TRUE), "CECOSF")),
+         across(where(is.character), ~ str_replace_all(., regex("Cerrillos De Nos", ignore_case = TRUE), "Ribera del Maipo")),
+         across(where(is.character), ~ str_replace_all(., regex("Posta de Salud Rural", ignore_case = TRUE), "PSR")),
+         across(where(is.character), ~ str_replace_all(., regex("Cecosf", ignore_case = TRUE), "CECOSF"))
+  )
+piv_comuna_2024 <- piv2024 %>%
   group_by(comuna) %>%
   summarize(piv_2024 = sum(inscritos)) %>%
   ungroup() %>%
@@ -35,7 +48,20 @@ piv_comuna <- piv %>%
          across(where(is.character), ~ str_replace_all(., regex("Cecosf", ignore_case = TRUE), "CECOSF"))
   )
 
-piv_estab <- piv %>%
+piv_estab_2025 <- piv2025 %>%
+  clean_names() %>% 
+  group_by(comuna, centro, codigo_centro) %>%
+  summarise(piv_2025 = sum(inscritos)) %>%
+  ungroup() %>%
+  mutate(across(where(is.character), ~ str_replace_all(., regex("Centro de Salud Familiar", ignore_case = TRUE), "CESFAM")),
+         across(where(is.character), ~ str_replace_all(., regex("Centro Comunitario de Salud Familiar", ignore_case = TRUE), "CECOSF")),
+         across(where(is.character), ~ str_replace_all(., regex("Centro Comunitario de Salud Familiar", ignore_case = TRUE), "CECOSF")),
+         across(where(is.character), ~ str_replace_all(., regex("Cerrillos De Nos", ignore_case = TRUE), "Ribera del Maipo")),
+         across(where(is.character), ~ str_replace_all(., regex("Posta de Salud Rural", ignore_case = TRUE), "PSR")),
+         across(where(is.character), ~ str_replace_all(., regex("Cecosf", ignore_case = TRUE), "CECOSF"))
+  )
+
+piv_estab_2024 <- piv2024 %>%
   clean_names() %>% 
   group_by(comuna, centro, codigo_centro) %>%
   summarise(piv_2024 = sum(inscritos)) %>%
@@ -48,7 +74,32 @@ piv_estab <- piv %>%
          across(where(is.character), ~ str_replace_all(., regex("Cecosf", ignore_case = TRUE), "CECOSF"))
   )
 
-#rm(piv)
+#rm(piv2024)
+#rm(piv2025)
+
+
+####################### Procesar base de datos usuarios Telesalud #####################
+
+#RUNs a eliminar
+runs_a_eliminar <- c(
+  177035793, 192012953, 176638737, 179582295, 182778745,
+  178362070, 192646340, 177069094, 177987492, 111111111
+)
+
+#Servicios de Salud válidos
+servicios_salud_validos <- c(
+  "Municipalidad de Paine", "Municipalidad de Pedro Aguirre Cerda",
+  "Municipalidad de San Joaquín", "Municipalidad de Lo Espejo",
+  "Municipalidad de La Cisterna", "Municipalidad de Buin",
+  "Municipalidad de El Bosque", "Municipalidad de San Bernardo",
+  "Municipalidad de Calera de Tango", "Municipalidad de La Granja",
+  "Municipalidad de San Miguel"
+)
+
+# 4. Filtrar base
+usuarios <- usuarios %>%
+  filter(!RUN %in% runs_a_eliminar) %>%
+  filter(`Servicio Salud` %in% servicios_salud_validos)
 
 ####################### Manejo de la base de telesalud #####################
 
