@@ -99,8 +99,17 @@ servicios_salud_validos <- c(
 # 4. Filtrar base
 usuarios <- usuarios %>%
   filter(!run %in% runs_a_eliminar) %>%
-  filter(servicio_salud %in% servicios_salud_validos)
+  filter(servicio_salud %in% servicios_salud_validos) %>% 
+  mutate(across(where(is.character), ~ str_replace_all(., regex("Centro de Salud Familiar", ignore_case = TRUE), "CESFAM")),
+         across(where(is.character), ~ str_replace_all(., regex("Centro Comunitario de Salud Familiar", ignore_case = TRUE), "CECOSF")),
+         across(where(is.character), ~ str_replace_all(., regex("Centro Comunitario de Salud Familiar", ignore_case = TRUE), "CECOSF")),
+         across(where(is.character), ~ str_replace_all(., regex("Cerrillos De Nos", ignore_case = TRUE), "Ribera del Maipo")),
+         across(where(is.character), ~ str_replace_all(., regex("Posta de Salud Rural", ignore_case = TRUE), "PSR")),
+         across(where(is.character), ~ str_replace_all(., regex("Cecosf", ignore_case = TRUE), "CECOSF"))
+  )
 
+unique(usuarios$organizacion)
+unique(piv_estab_2024$centro)
 ####################### Manejo de la base de telesalud #####################
 
 last_sol_date <- max(as.Date(data$fecha_solicitud, format='%d-%m-%Y %H:%M'))
