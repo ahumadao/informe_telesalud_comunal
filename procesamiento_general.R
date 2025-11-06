@@ -19,10 +19,13 @@ pacman::p_load(
 limpiar_nombres_centro <- function(df, col_name = NULL) {
   df %>%
     mutate(
-      across(where(is.character), ~ str_replace_all(., regex("Centro de Salud Familiar", ignore_case = TRUE), "CESFAM")),
-      across(where(is.character), ~ str_replace_all(., regex("Centro Comunitario de Salud Familiar", ignore_case = TRUE), "CECOSF")),
+      across(where(is.character), ~ str_replace_all(., regex("CESFAM", ignore_case = TRUE), "Centro de Salud Familiar" )),
+      across(where(is.character), ~ str_replace_all(., regex("Centro de Salud Familiar", ignore_case = TRUE), "Centro de Salud Familiar" )),
+      across(where(is.character), ~ str_replace_all(., regex("CECOSF", ignore_case = TRUE), "Centro Comunitario de Salud Familiar")),
+      across(where(is.character), ~ str_replace_all(., regex("Centro Comunitario de Salud Familiar", ignore_case = TRUE), "Centro Comunitario de Salud Familiar")),
       across(where(is.character), ~ str_replace_all(., regex("Cerrillos De Nos", ignore_case = TRUE), "Ribera del Maipo")),
-      across(where(is.character), ~ str_replace_all(., regex("Posta de Salud Rural", ignore_case = TRUE), "PSR")),
+      across(where(is.character), ~ str_replace_all(., regex("PSR", ignore_case = TRUE), "Posta de Salud Rural")),
+      across(where(is.character), ~ str_replace_all(., regex("Posta de Salud Rural", ignore_case = TRUE), "Posta de Salud Rural")),
       across(where(is.character), ~ str_replace_all(., regex("Cecosf", ignore_case = TRUE), "CECOSF"))
     )
 }
@@ -63,10 +66,34 @@ piv_estab_2025 <- piv2025 %>%
 
 piv_estab_2024 <- piv2024 %>%
   clean_names() %>%
-  limpiar_nombres_centro() %>%
+  # Nota: No usamos limpiar_nombres_centro() aún en piv_estab_2024,
+  # ya que los nombres serán sobrescritos por piv_estab_2025.
   group_by(comuna, centro, codigo_centro) %>%
   summarise(piv_2024 = sum(inscritos)) %>%
   ungroup()
+
+
+# --- INICIO DE LA HOMOLOGACIÓN DE NOMBRES ---
+
+# 1. Crear el diccionario de nombres (Código y Nombre 2025)
+diccionario_nombres_2025 <- piv_estab_2025 %>%
+  select(codigo_centro, centro_2025 = centro, comuna_2025 = comuna) %>%
+  distinct() # Asegurar que solo haya una entrada por código
+
+# 2. Homologar piv_estab_2024:
+piv_estab_2024 <- piv_estab_2024 %>%
+  # Unir el diccionario de nombres usando el código
+  left_join(diccionario_nombres_2025, by = "codigo_centro") %>%
+  # Sobrescribir las columnas 'centro' y 'comuna' con los valores de 2025
+  mutate(
+    centro = coalesce(centro_2025, centro), # Usar el nombre 2025 si existe, sino el 2024
+    comuna = coalesce(comuna_2025, comuna) # Usar la comuna 2025 si existe, sino la 2024
+  ) %>%
+  # Limpieza: eliminar columnas auxiliares y ordenar
+  select(-centro_2025, -comuna_2025) %>%
+  # Volver a agrupar si la columna 'comuna' cambió (aunque el PIV ya es agregado)
+  group_by(comuna, centro, codigo_centro) %>%
+  summarise(piv_2024 = sum(piv_2024), .groups = 'drop')
 
 #rm(piv2024)
 #rm(piv2025) # Si se descomentan estas líneas, se reduce el uso de memoria.
