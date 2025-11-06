@@ -54,18 +54,65 @@ tasa_solicitudes_mensual_establecimiento <- comuna1 %>%
   )
 
 # **total_sol_centro** (Para tabla del informe)
-total_sol_centro <- comuna1 %>%
-  group_by(centro) %>%
-  summarise(`Total de solicitudes` = n(), .groups = 'drop') %>%
-  # Se une PIV para completar la tabla del informe
-  left_join(piv_estab_2024 %>% select(centro, piv_2024), by = "centro") %>%
-  mutate(
-    # Tasa estandarizada por meses de implementación (simplificando a 1 mes por ahora)
-    `N°solicitudes/1000 personas/mes` = round((`Total de solicitudes` / piv_2024) * 1000, 2),
-    `PIV 2025` = piv_2024
-  ) %>%
-  select(centro, `Total de solicitudes`, `PIV 2025`, `N°solicitudes/1000 personas/mes`)
 
+# Cálculo del número total de meses en el período analizado
+# Se usa 'month_year_sol' (inicio de mes) para calcular la diferencia de meses.
+fecha_inicio_analisis <- min(comuna1$month_year_sol, na.rm = TRUE)
+fecha_fin_analisis <- max(comuna1$month_year_sol, na.rm = TRUE)
+
+# Variables de tiempo del período anterior
+fecha_inicio_anterior <- fecha_inicio_analisis - years(1)
+fecha_fin_anterior <- fecha_fin_analisis - years(1)
+
+# Calcula la diferencia de meses. (+1 para incluir el primer mes completo)
+total_meses_analisis <- interval(fecha_inicio_analisis, fecha_fin_analisis) %/% months(1) + 1
+total_meses_anterior <- total_meses_analisis # Se asume la misma longitud de período
+
+# Base de solicitudes del AÑO ANTERIOR
+data_anterior <- comuna1 %>%
+  filter(month_year_sol >= fecha_inicio_anterior & month_year_sol <= fecha_fin_anterior)
+
+# Cálculo de total_sol_centro (Integrando ambos períodos y PIVs)
+total_sol_centro <- comuna1 %>%
+  # Solicitudes del período actual (Base principal)
+  group_by(centro) %>%
+  summarise(`Total de Solicitudes` = n(), .groups = 'drop') %>%
+  
+  # Agrego solicitudes del período anterior
+  left_join(
+    data_anterior %>%
+      group_by(centro) %>%
+      summarise(total_sol_anterior = n(), .groups = 'drop'),
+    by = "centro"
+  ) %>%
+  
+  # Unir PIV 2025 y PIV 2024
+  left_join(piv_estab_2025 %>% select(centro, piv_2025), by = "centro") %>%
+  left_join(piv_estab_2024 %>% select(centro, piv_2024), by = "centro") %>%
+  
+  # Cálculo de las Tasas
+  mutate(
+    # Tasa Actual
+    `N°solicitudes/1000 personas/mes (actual)` = round((`Total de Solicitudes` / piv_2025) * 1000 / total_meses_analisis, 2),
+    
+    # Tasa Anterior
+    # Usa total_sol_anterior y piv_2024
+    `N°solicitudes/1000 personas/mes (hace 1 año)` = round((total_sol_anterior / piv_2024) * 1000 / total_meses_anterior, 2),
+    
+    # Renombrar PIV
+    `PIV 2025` = piv_2025,
+    `PIV 2024` = piv_2024
+  ) %>%
+  
+  # Selección y reordenamiento de columnas finales
+  select(
+    centro,
+    `Total de Solicitudes`,
+    `PIV 2025`,
+    `N°solicitudes/1000 personas/mes (actual)`,
+    `PIV 2024`,
+    `N°solicitudes/1000 personas/mes (hace 1 año)`
+  )
 # ------------------------------------------------------------------------------
 # 4. Proporción de Pendientes (Tabla de Proporciones)
 # ------------------------------------------------------------------------------
