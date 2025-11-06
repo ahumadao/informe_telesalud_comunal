@@ -95,9 +95,6 @@ usuarios <- usuarios %>%
   filter(servicio_salud %in% servicios_salud_validos) %>%
   limpiar_nombres_centro()
 
-unique(usuarios$organizacion)
-unique(piv_estab_2024$centro)
-
 ####################### Manejo de la base de telesalud #####################
 
 # La fecha de corte se calcula con el 'data' original, pero la fecha debe ser POSIXct primero
